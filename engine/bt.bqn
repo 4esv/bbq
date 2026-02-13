@@ -284,3 +284,87 @@ Kurt ⇐ {
   s ← Pstd 𝕩
   ¯3 + (+´((𝕩-m)÷s⌈1e¯10)⋆4) ÷ ≠𝕩
 }
+
+# ── Reporting ────────────────────────────────
+
+# name‿pos Report strat_ret‿bh_ret — print formatted summary
+Report ⇐ {
+  name‿pos ← 𝕨
+  strat‿bh ← 𝕩
+
+  # Format percentage with sign
+  Pct ← {
+    v ← ⌊0.5+1000×|𝕩
+    d ← •Fmt 10|v
+    w ← •Fmt ⌊v÷10
+    s ← ((𝕩≥0)⊑"-+"∾¨<"") ∾ w ∾ "." ∾ d ∾ "%"
+    s
+  }
+
+  # Round to 2 decimal places with sign
+  Rd ← {
+    v ← ⌊0.5+100×|𝕩
+    d ← •Fmt 100|v
+    d ↩ ((2>≠d)/"0") ∾ d
+    w ← •Fmt ⌊v÷100
+    s ← ((𝕩<0)/"-") ∾ w ∾ "." ∾ d
+    s
+  }
+
+  # Right-pad string to width
+  Pad ← {(𝕨⌈≠𝕩)↑𝕩}
+
+  # Format a metric line: label, strategy value, benchmark value
+  Line ← {l‿sv‿bv:
+    (16 Pad l) ∾ (10 Pad sv) ∾ "  (B&H: " ∾ bv ∾ ")"
+  }
+
+  # Format a solo metric line (no benchmark)
+  Solo ← {l‿sv:
+    (16 Pad l) ∾ sv
+  }
+
+  # Compute all metrics
+  s_tr ← Pct TotalRet strat ⋄ b_tr ← Pct TotalRet bh
+  s_cg ← Pct CAGR strat    ⋄ b_cg ← Pct CAGR bh
+  s_sh ← Rd Sharpe strat    ⋄ b_sh ← Rd Sharpe bh
+  s_so ← Rd Sortino strat   ⋄ b_so ← Rd Sortino bh
+  s_dd ← Pct MaxDD strat    ⋄ b_dd ← Pct MaxDD bh
+  s_ca ← Rd Calmar strat    ⋄ b_ca ← Rd Calmar bh
+  s_av ← Pct AnnVol strat   ⋄ b_av ← Pct AnnVol bh
+  s_wr ← Pct WinRate strat
+  s_pf ← Rd ProfitFactor strat
+  s_ex ← Pct Expectancy strat
+  s_td ← •Fmt Trades pos
+  s_ti ← Pct TimeIn pos
+  s_sk ← Rd Skew strat
+  s_ku ← Rd Kurt strat
+
+  •Out "═══ " ∾ name ∾ " ═══"
+  •Out Line "Total:"‿s_tr‿b_tr
+  •Out Line "CAGR:"‿s_cg‿b_cg
+  •Out Line "Sharpe:"‿s_sh‿b_sh
+  •Out Line "Sortino:"‿s_so‿b_so
+  •Out Line "MaxDD:"‿s_dd‿b_dd
+  •Out Line "Calmar:"‿s_ca‿b_ca
+  •Out Line "Volatility:"‿s_av‿b_av
+  •Out Solo "Win Rate:"‿s_wr
+  •Out Solo "Profit Factor:"‿s_pf
+  •Out Solo "Expectancy:"‿s_ex
+  •Out Solo "Trades:"‿s_td
+  •Out Solo "Time In:"‿s_ti
+  •Out Solo "Skew:"‿s_sk
+  •Out Solo "Kurtosis:"‿s_ku
+
+  # Verdict
+  sharpe ← Sharpe strat
+  maxdd ← MaxDD strat
+  verdict ← {
+    maxdd<¯0.40 ? "Max drawdown > 40%, reconsider";
+    sharpe≥1.0  ? "Worth paper trading";
+    sharpe≥0.5  ? "Has potential, needs work";
+    "Not worth pursuing"
+  }
+  •Out "───"
+  •Out "Verdict: " ∾ verdict
+}
