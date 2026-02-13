@@ -1,18 +1,38 @@
 # bbq
 
-**BQN Backtesting for Quant.**
+**BQN Based Quant.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Get Started
+v0.2
 
-Requires [CBQN](https://github.com/dzaima/CBQN) and Python 3 + `pip install yfinance`.
+---
+
+## Overview
+
+bbq is a toolkit for quantitative strategy development in BQN.
+It provides indicators, simulation, metrics, portfolio backtesting, and walk-forward validation.
+Bring your own hypothesis, describe it in a few lines and watch it go.
+
+## Architecture
+
+```
+engine/
+├── core.bqn    # Shared: data loading, indicators, signal utilities
+├── bt.bqn      # Backtesting: simulation, PnL, metrics, portfolio, reporting
+└── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
+```
+
+`core.bqn ← bt.bqn ← wf.bqn`. Each layer re-exports the one below it. Strategies import `bt.bqn`, walk-forward scripts import `wf.bqn`.
+
+## Quick Start
 
 ```bash
 make fetch                        # download SPY data (5yr daily)
 bqn strategies/ma_cross.bqn      # run the example strategy
-make new name=my_idea             # scaffold your own
 ```
+
+Output:
 
 ```
 ═══ MA Cross (10/50) ═══
@@ -24,19 +44,12 @@ Sharpe:         0.66        (B&H: 0.76)
 Verdict: Has potential, needs work
 ```
 
-## Makefile
+## Usage
 
-```
-make new name=X        Create strategy from template
-make fetch [ticker=X]  Download market data (default: SPY, 5y)
-make run name=X        Run a strategy
-make source name=X     Create data source (fetcher + parser)
-make clean             Remove data files
-```
+### Writing a Strategy
 
-## Writing a Strategy
-
-Positions are arrays of `1` (long), `0` (flat), `¯1` (short). The engine multiplies positions by returns.
+Every strategy is a BQN script that imports the engine, loads data, computes indicators, generates positions, and prints a report.
+Positions are arrays of `1` (long), `0` (flat), and `¯1` (short). The engine multiplies positions by returns. This is the core concept.
 
 Pure array pattern (no bar-by-bar state):
 
@@ -61,29 +74,49 @@ Step ← {
 pos ← Step bt._Sim ⟨0,0⟩‿obs
 ```
 
-For multiple series per bar, zip them: `obs ← <˘⍉> price‿lower‿ma`.
+### Portfolio Backtesting
 
-### Running the Backtest
+Run multiple assets with weighted allocation:
 
 ```bqn
-ret ← bt.Ret c                    # returns from prices
-warmup ← (≠c) - ≠pos              # auto-align
-strat ← pos bt.Run warmup↓ret     # strategy returns
-bh ← warmup↓ret                   # buy-and-hold benchmark
-"My Strategy"‿pos bt.Report strat‿bh
+bt ← •Import "../engine/bt.bqn"
+# assets: list of ⟨positions, returns⟩ pairs
+weights ← 0.5‿0.3‿0.2
+port_ret ← weights bt.PortRun ⟨⟨pos_spy, ret_spy⟩, ⟨pos_qqq, ret_qqq⟩, ⟨pos_gld, ret_gld⟩⟩
+port_eq ← bt.PortEquity port_ret
 ```
 
-`Ret` computes returns. `Run` multiplies positions by returns. `Report` prints everything. `Cost` and `Equity` are there if you need them.
+### Walk-Forward Validation
 
-## Data Contract
+Test parameter robustness across rolling windows:
 
-`Load` returns a namespace: `{dates⇐, close⇐, high⇐, low⇐, open⇐, vol⇐}`. All numeric arrays are flat floats, same length. Any source that returns this shape works. Use `make source name=X` to scaffold a new fetcher/parser pair.
+```bqn
+wf ← •Import "../engine/wf.bqn"
+data ← wf.Validate wf.Load "../data/spy.csv"
+prices ← data.close
 
-## API Reference
+# Strategy function: params 𝔽 prices → positions
+MACross ← {
+  fast‿slow ← 𝕨
+  f‿s ← wf.Align (fast wf.MA 𝕩)‿(slow wf.MA 𝕩)
+  f > s
+}
+
+grid ← wf.Grid ⟨8‿10‿12, 40‿50‿60⟩
+config ← ⟨500, 100, grid, 0.001, wf.Sharpe⟩
+
+results ← prices MACross wf._WF config
+"MA Cross"‿500‿100‿(≠grid) wf.WFReport results
+```
+
+### Data Contract
+
+`Load` returns a namespace: `{dates⇐, close⇐, high⇐, low⇐, open⇐, vol⇐}`. All numeric arrays are flat floats, same length.
+Any data source that returns this shape works with bbq. Use `make source name=X` to scaffold a new fetcher/parser pair.
 
 ### Indicators
 
-All dyadic: `n Indicator prices` unless noted. Output is shorter than input by the warmup period (no padding). EMA returns same length.
+All dyadic: `n Indicator prices` unless noted. Output is shorter than input by the warmup period (no padding). EMA returns same length as input.
 
 | Name | Signature | Description |
 |------|-----------|-------------|
@@ -118,7 +151,12 @@ All dyadic: `n Indicator prices` unless noted. Output is shorter than input by t
 
 ### Simulation
 
-`_Sim` is a 1-modifier that turns a step function into a position-generating scan. Your step function receives state (left) and an observation (right), returns new state. First element of state is always the position.
+`_Sim` is a 1-modifier that turns a step function into a position-generating scan.
+Your step function receives state (left) and an observation (right), returns new state.
+First element of state is always the position.
+
+For multiple series per bar, zip them: `obs ← <˘⍉> price‿lower‿ma`. Each observation becomes a list `⟨pᵢ, lᵢ, mᵢ⟩`.
+Nested state composes naturally: `⟨pos, peak, ⟨kx, kp⟩⟩`.
 
 ### Metrics
 
@@ -145,11 +183,46 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `Skew` | Return distribution asymmetry |
 | `Kurt` | Tail fatness (excess kurtosis) |
 
+### Portfolio
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `PortRun` | `weights PortRun assets` | Weighted multi-asset returns |
+| `PortCost` | `rates PortCost positions` | Combined transaction costs |
+| `PortEquity` | `PortEquity ret` | Equity curve (alias) |
+| `PortReport` | `name‿cpos PortReport assets‿cret` | Per-asset + combined report |
+
+### Walk-Forward
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Windows` | `train‿test Windows prices` | Rolling train/test splits |
+| `Grid` | `Grid ranges` | Cartesian product of param ranges |
+| `_WF` | `prices Strategy _WF config` | Walk-forward orchestrator |
+| `WFReport` | `name‿tr‿te‿gs WFReport results` | Print WF summary |
+
+### Makefile
+
+```
+make new name=X        Create strategy from template
+make fetch [ticker=X]  Download market data (default: SPY, 5y)
+make run name=X        Run a strategy
+make test              Run test suite
+make source name=X     Create data source (fetcher + parser)
+make clean             Remove data files
+```
+
 ## Design
 
-Two phases: indicators (pure array ops, SIMD-friendly) and execution (compound-state scan, sequential). Five primitive patterns implement all indicators: windowed reduction, scan accumulation, shifted arrays, element-wise arithmetic, and compound scan.
+A backtest is a fold. Indicators are array operations. Positions are arrays of 1, 0, and ¯1. The engine multiplies positions by returns.
 
-`_Sim` exists for strategies that need bar-by-bar state (trailing stops, regime filters, Kalman filters). It generates position arrays that feed into the same `Run` pipeline as any array-computed position.
+The architecture has two phases: indicators (pure array ops, embarrassingly parallel, SIMD-friendly) and execution (compound-state scan, inherently sequential).
+Five primitive patterns implement all indicators: windowed reduction, scan accumulation, shifted arrays, element-wise arithmetic, and compound scan.
+
+`_Sim` exists for strategies that need bar-by-bar state (trailing stops, regime filters, Kalman filters). It's not an engine, it only generates position arrays.
+Those arrays feed into the same `Run` pipeline as any array-computed position.
+
+Walk-forward validation splits history into rolling train/test windows, optimizes parameters on train, evaluates on test, and stitches out-of-sample segments. The OOS equity curve is the real result.
 
 ## License
 
