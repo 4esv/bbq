@@ -20,6 +20,7 @@ pos ← 0⥊˜≠c  # placeholder: flat
 # ── Backtest ────────────────────────────────
 ret ← bt.Ret c
 pos‿ret ↩ bt.Align pos‿ret
+pos‿ret ↩ (¯1↓pos)‿(1↓ret)  # 1-bar shift: trade on next open
 strat ← pos bt.Run ret
 bh ← ret
 

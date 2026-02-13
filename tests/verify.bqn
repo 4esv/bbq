@@ -584,6 +584,15 @@ wf_result ← synth AlwaysLong wf._WF ⟨6, 2, ⟨⟨1⟩⟩, 0, wf.Sharpe⟩
 
 pass +↩ 1 ⋄ •Out "  PASS  _WF"
 
+# Look-ahead bias detection: momentum on oscillating data
+# With look-ahead, strategy sees each return's sign before trading → all positive OOS
+# Without look-ahead, directional reversals produce negative OOS returns
+MomStrat ← {𝕨 ⋄ 1⌈¯1⌊ ×𝕩-»𝕩}
+synth_la ← 100‿102‿99‿104‿97‿101‿98‿103‿100‿105‿96‿102‿99‿104‿97‿101‿98‿103‿100‿105
+wf_la ← synth_la MomStrat wf._WF ⟨6, 3, ⟨⟨1⟩⟩, 0, wf.Sharpe⟩
+! ∨´ wf_la.oos_ret < 0
+pass +↩ 1 ⋄ •Out "  PASS  _WF no look-ahead bias"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
