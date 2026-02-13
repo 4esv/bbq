@@ -1,4 +1,4 @@
-# bbq — test suite
+# bbq — BQN Based Quant — test suite
 # tests/verify.bqn
 
 bt ← •Import "../engine/bt.bqn"
@@ -470,6 +470,119 @@ kurt ← bt.Kurt 1‿2‿3‿4‿5
 ¯1.3 As kurt
 
 pass +↩ 1 ⋄ •Out "  PASS  Kurt"
+
+# ══ Portfolio ═══════════════════════════════
+
+# ── PortRun ────────────────────────────────
+
+# 2 assets, equal weights, known returns
+pr ← 0.5‿0.5 bt.PortRun ⟨⟨1‿1‿1‿1, 0.02‿¯0.01‿0.03‿¯0.02⟩, ⟨1‿1‿1‿1, 0.01‿0.02‿¯0.01‿0.04⟩⟩
+# Expected: 0.5×0.02+0.5×0.01, 0.5×(¯0.01)+0.5×0.02, ...
+0.015‿0.005‿0.01‿0.01 Ae pr
+
+pass +↩ 1 ⋄ •Out "  PASS  PortRun"
+
+# ── PortRun weights assertion ──────────────
+
+! 1 = ({𝕩 bt.PortRun ⟨⟨1‿1, 0.01‿0.02⟩, ⟨1‿1, 0.03‿0.04⟩⟩ ⋄ 0}⎊{1}) 0.3‿0.3
+
+pass +↩ 1 ⋄ •Out "  PASS  PortRun weight assertion"
+
+# ── PortCost ───────────────────────────────
+
+pc ← 0.001‿0.002 bt.PortCost ⟨0‿1‿1‿0, 0‿0‿1‿¯1⟩
+# Asset 0: 0.001×|0,1,0,1| = 0,0.001,0,0.001
+# Asset 1: 0.002×|0,0,1,2| = 0,0,0.002,0.004
+# Combined: 0, 0.001, 0.002, 0.005
+0‿0.001‿0.002‿0.005 Ae pc
+
+pass +↩ 1 ⋄ •Out "  PASS  PortCost"
+
+# ── PortEquity ─────────────────────────────
+
+peq ← bt.PortEquity 0.1‿¯0.05‿0.02
+eq_ref ← bt.Equity 0.1‿¯0.05‿0.02
+peq Ae eq_ref
+
+pass +↩ 1 ⋄ •Out "  PASS  PortEquity"
+
+# ══ Walk-Forward ════════════════════════════
+
+wf ← •Import "../engine/wf.bqn"
+
+# ── Windows ────────────────────────────────
+
+# 10 bars, train=4, test=2 → 3 folds
+wins ← 4‿2 wf.Windows ↕10
+! 3 = ≠wins
+
+# Fold 0: train=[0..3], test=[4..5]
+0‿1‿2‿3 Ae ⊑⊑wins
+4‿5 Ae 1⊑⊑wins
+
+# Fold 1: train=[2..5], test=[6..7]
+2‿3‿4‿5 Ae ⊑1⊑wins
+6‿7 Ae 1⊑1⊑wins
+
+# Fold 2: train=[4..7], test=[8..9]
+4‿5‿6‿7 Ae ⊑2⊑wins
+8‿9 Ae 1⊑2⊑wins
+
+pass +↩ 1 ⋄ •Out "  PASS  Windows"
+
+# ── Grid ───────────────────────────────────
+
+# 2 ranges → 9 combos
+g ← wf.Grid ⟨10‿20‿30, 40‿50‿60⟩
+! 9 = ≠g
+# First tuple
+10‿40 Ae ⊑g
+# Last tuple
+30‿60 Ae ¯1⊑g
+
+pass +↩ 1 ⋄ •Out "  PASS  Grid (2 ranges)"
+
+# Single range
+g1 ← wf.Grid ⟨1‿2‿3⟩
+! 3 = ≠g1
+⟨1⟩ Ae ⊑g1
+⟨3⟩ Ae ¯1⊑g1
+
+pass +↩ 1 ⋄ •Out "  PASS  Grid (1 range)"
+
+# Three ranges
+g3 ← wf.Grid ⟨1‿2, 3‿4, 5‿6⟩
+! 8 = ≠g3
+1‿3‿5 Ae ⊑g3
+2‿4‿6 Ae ¯1⊑g3
+
+pass +↩ 1 ⋄ •Out "  PASS  Grid (3 ranges)"
+
+# ── _WF ────────────────────────────────────
+
+# Trivial always-long strategy on synthetic data
+# 20 bars of steadily rising prices
+synth ← 100+↕20
+
+# Strategy: ignore params, go long always
+AlwaysLong ← {𝕨 ⋄ (≠𝕩)⥊1}
+
+wf_result ← synth AlwaysLong wf._WF ⟨6, 2, ⟨⟨1⟩⟩, 0, wf.Sharpe⟩
+
+# Verify fold count: 20 bars, train=6, test=2 → nf = 1+⌊(20-6-2)÷2 = 1+6 = 7
+! 7 = ≠wf_result.folds
+
+# OOS return length: 7 folds × (2-1) = 7 test returns (Ret shortens by 1)
+! 7 = ≠wf_result.oos_ret
+
+# Equity curve same length as OOS returns
+! (≠wf_result.oos_ret) = ≠wf_result.oos_eq
+
+# Summary metrics are finite
+! ¬ ∞ = |wf_result.summary.sharpe
+! ¬ ∞ = |wf_result.summary.maxdd
+
+pass +↩ 1 ⋄ •Out "  PASS  _WF"
 
 # ══ Summary ══════════════════════════════════
 
