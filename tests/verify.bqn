@@ -506,6 +506,58 @@ peq Ae eq_ref
 
 pass +↩ 1 ⋄ •Out "  PASS  PortEquity"
 
+# ══ Walk-Forward ════════════════════════════
+
+wf ← •Import "../engine/wf.bqn"
+
+# ── Windows ────────────────────────────────
+
+# 10 bars, train=4, test=2 → 3 folds
+wins ← 4‿2 wf.Windows ↕10
+! 3 = ≠wins
+
+# Fold 0: train=[0..3], test=[4..5]
+0‿1‿2‿3 Ae ⊑⊑wins
+4‿5 Ae 1⊑⊑wins
+
+# Fold 1: train=[2..5], test=[6..7]
+2‿3‿4‿5 Ae ⊑1⊑wins
+6‿7 Ae 1⊑1⊑wins
+
+# Fold 2: train=[4..7], test=[8..9]
+4‿5‿6‿7 Ae ⊑2⊑wins
+8‿9 Ae 1⊑2⊑wins
+
+pass +↩ 1 ⋄ •Out "  PASS  Windows"
+
+# ── Grid ───────────────────────────────────
+
+# 2 ranges → 9 combos
+g ← wf.Grid ⟨10‿20‿30, 40‿50‿60⟩
+! 9 = ≠g
+# First tuple
+10‿40 Ae ⊑g
+# Last tuple
+30‿60 Ae ¯1⊑g
+
+pass +↩ 1 ⋄ •Out "  PASS  Grid (2 ranges)"
+
+# Single range
+g1 ← wf.Grid ⟨1‿2‿3⟩
+! 3 = ≠g1
+⟨1⟩ Ae ⊑g1
+⟨3⟩ Ae ¯1⊑g1
+
+pass +↩ 1 ⋄ •Out "  PASS  Grid (1 range)"
+
+# Three ranges
+g3 ← wf.Grid ⟨1‿2, 3‿4, 5‿6⟩
+! 8 = ≠g3
+1‿3‿5 Ae ⊑g3
+2‿4‿6 Ae ¯1⊑g3
+
+pass +↩ 1 ⋄ •Out "  PASS  Grid (3 ranges)"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
