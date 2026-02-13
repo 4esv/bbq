@@ -128,6 +128,41 @@ Kurt ⇐ {
   ¯3 + (+´((𝕩-m)÷s⌈eps)⋆4) ÷ ≠𝕩
 }
 
+# ── Portfolio ───────────────────────────────
+
+# weights PortRun assets — weighted portfolio returns
+# assets: list of pos‿ret pairs, weights: per-asset allocation (must sum to 1)
+PortRun ⇐ {
+  ! 1e¯6 > |1-+´𝕨
+  strats ← {p‿r ← 𝕩 ⋄ p×r}¨ 𝕩
+  +´ 𝕨 × strats
+}
+
+# rates PortCost positions — combined transaction costs
+# positions: list of pos arrays, rates: per-asset cost rate
+PortCost ⇐ {+´ 𝕨 {𝕨 × |-⟜»𝕩}¨ 𝕩}
+
+# PortEquity — alias for Equity (clarity for portfolio context)
+PortEquity ⇐ Equity
+
+# name‿cpos PortReport assets‿cret
+# assets: list of ticker‿strat_ret pairs, cret: combined portfolio returns
+PortReport ⇐ {
+  name‿cpos ← 𝕨
+  assets‿cret ← 𝕩
+
+  •Out "═══ " ∾ name ∾ " ═══"
+
+  # Per-asset one-liners
+  {
+    ticker‿sr ← 𝕩
+    •Out "  " ∾ (8 Pad ticker) ∾ "Sharpe: " ∾ (Rd Sharpe sr) ∾ "  Total: " ∾ (Pct TotalRet sr) ∾ "  MaxDD: " ∾ (Pct MaxDD sr)
+  }¨ assets
+
+  •Out ""
+  name‿cpos Report cret‿cret
+}
+
 # ── Reporting helpers ────────────────────────
 
 # Format percentage with sign
