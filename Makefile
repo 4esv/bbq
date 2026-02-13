@@ -1,4 +1,4 @@
-.PHONY: new fetch run source clean help
+.PHONY: new fetch run test source clean help
 
 define STRATEGY_TEMPLATE
 # Strategy: $(name)
@@ -7,7 +7,7 @@ define STRATEGY_TEMPLATE
 # Created: $(shell date +%Y-%m-%d)
 
 bt ← •Import "../engine/bt.bqn"
-data ← bt.Load "../data/spy.csv"
+data ← bt.Validate bt.Load "../data/spy.csv"
 c ← data.close
 
 # ── Indicators ──────────────────────────────
@@ -18,11 +18,10 @@ c ← data.close
 pos ← 0⥊˜≠c  # placeholder: flat
 
 # ── Backtest ────────────────────────────────
-warmup ← 0  # TODO: set to max indicator period
 ret ← bt.Ret c
-pos ↩ (1+warmup)↓pos            # align to returns, skip warmup
-bh ← warmup↓ret                 # buy-and-hold benchmark
-strat ← pos bt.Run bh
+pos‿ret ↩ bt.Align pos‿ret
+strat ← pos bt.Run ret
+bh ← ret
 
 "$(name)"‿pos bt.Report strat‿bh
 endef
@@ -47,6 +46,10 @@ run:
 	@test -n "$(name)" || (echo "Usage: make run name=strategy_name" && exit 1)
 	bqn strategies/$(name).bqn
 
+# Run test suite
+test:
+	bqn tests/verify.bqn
+
 # Create a new data source (fetcher + parser pair)
 # Usage: make source name=alpaca
 source:
@@ -67,5 +70,6 @@ help:
 	@echo "  make new name=X      Create strategy from template"
 	@echo "  make fetch [ticker=X] Download market data"
 	@echo "  make run name=X      Run a strategy"
+	@echo "  make test             Run test suite"
 	@echo "  make source name=X   Create data source (fetcher + parser)"
 	@echo "  make clean            Remove data files"

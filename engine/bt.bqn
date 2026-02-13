@@ -1,6 +1,11 @@
 # bbq — BQN Backtesting for Quant
 # engine/bt.bqn
 
+# ── Constants ────────────────────────────────
+
+eps ← 1e¯10  # division guard
+tdy ← 252    # trading days/year
+
 # ── Data ─────────────────────────────────────
 
 # NOTE: yfinance CSV format: 3 header lines, then Date,Close,High,Low,Open,Volume
@@ -9,6 +14,7 @@ Split ← (⊢-˜+`×¬)∘=⟜','⊸⊔
 Load ⇐ {
   lines ← •FLines 𝕩
   rows ← Split¨ 3↓lines
+  ! ∧´6≤≠¨rows
   dates ⇐ 0⊸⊑¨ rows
   close ⇐ •ParseFloat¨ 1⊸⊑¨ rows
   high  ⇐ •ParseFloat¨ 2⊸⊑¨ rows
@@ -16,6 +22,27 @@ Load ⇐ {
   open  ⇐ •ParseFloat¨ 4⊸⊑¨ rows
   vol   ⇐ •ParseFloat¨ 5⊸⊑¨ rows
 }
+
+Validate ⇐ {
+  ! 0<≠𝕩.close
+  n ← ≠𝕩.close
+  ! n=≠𝕩.high
+  ! n=≠𝕩.low
+  ! n=≠𝕩.open
+  ! n=≠𝕩.vol
+  ! ∧´𝕩.close>0
+  ! ∧´𝕩.high>0
+  ! ∧´𝕩.low>0
+  ! ∧´𝕩.open>0
+  ! ∧´𝕩.high≥𝕩.low
+  ! ∧´𝕩.high≥𝕩.close
+  ! ∧´𝕩.high≥𝕩.open
+  ! ∧´𝕩.low≤𝕩.close
+  ! ∧´𝕩.low≤𝕩.open
+  𝕩
+}
+
+Align ⇐ {m←⌊´≠¨𝕩 ⋄ (-m)↑¨𝕩}
 
 # ── Indicators ───────────────────────────────
 
@@ -64,7 +91,7 @@ RSI ⇐ {
   losses ← 0⌈-deltas
   ag ← 𝕨 Wilder gains
   al ← 𝕨 Wilder losses
-  100 - 100÷1+ag÷al⌈1e¯10
+  100 - 100÷1+ag÷al⌈eps
 }
 
 # fast‿slow‿sig MACD prices → macd‿signal‿hist
@@ -92,7 +119,7 @@ Stoch ⇐ {
   hi ← 𝕨 RMax h
   rng ← hi - lo
   # NOTE: align close to window output (drop n-1 warmup bars)
-  k ← 100 × (((𝕨-1)↓c)-lo) ÷ rng⌈1e¯10
+  k ← 100 × (((𝕨-1)↓c)-lo) ÷ rng⌈eps
   d ← 3 MA k
   k‿d
 }
@@ -122,7 +149,7 @@ VWAP ⇐ {
 AD ⇐ {
   h←𝕩.high ⋄ l←𝕩.low ⋄ c←𝕩.close ⋄ v←𝕩.vol
   rng ← h-l
-  mfm ← ((c-l)-(h-c)) ÷ rng⌈1e¯10
+  mfm ← ((c-l)-(h-c)) ÷ rng⌈eps
   +` mfm × v
 }
 
@@ -161,9 +188,9 @@ Hold ⇐ {
 # Step _Sim init‿obs → positions
 # Step: state 𝔽 observation → new_state (first element = position)
 _Sim ⇐ {
+  Fn ← 𝔽
   init‿obs ← 𝕩
   state ← init
-  Fn ← 𝔽
   {
     state ↩ state Fn 𝕩
     ⊑state
@@ -200,41 +227,33 @@ DdSeries ← {
 Pstd ← {m←(+´÷≠)𝕩 ⋄ √(+´(𝕩-m)⋆2)÷≠𝕩}
 
 # Annualized Sharpe ratio (Rf=0)
-Sharpe ⇐ {(√252) × ((+´÷≠)𝕩) ÷ (Pstd 𝕩)⌈1e¯10}
+Sharpe ⇐ {(√tdy) × ((+´÷≠)𝕩) ÷ (Pstd 𝕩)⌈eps}
 
 # Sortino ratio (downside deviation only)
 Sortino ⇐ {
   m ← (+´÷≠)𝕩
   dd ← 0⌊𝕩
   ds ← √(+´dd⋆2)÷≠𝕩
-  (√252) × m ÷ ds⌈1e¯10
+  (√tdy) × m ÷ ds⌈eps
 }
 
 # Maximum drawdown (negative number)
 MaxDD ⇐ {⌊´ DdSeries 𝕩}
 
 # Longest drawdown duration (bars)
-MaxDDDur ⇐ {
-  dd ← DdSeries 𝕩
-  run ← 0 ⋄ best ← 0
-  {
-    𝕩<0 ? run+↩1 ⋄ best↩best⌈run;
-    run↩0
-  }¨ dd
-  best⌈run
-}
+MaxDDDur ⇐ {⌈´0{𝕩×1+𝕨}`(DdSeries 𝕩)<0}
 
 # Total cumulative return
 TotalRet ⇐ {¯1+(¯1⊑×`1+𝕩)}
 
 # Compound annual growth rate (252 days/yr)
-CAGR ⇐ {((¯1⊑×`1+𝕩)⋆252÷≠𝕩)-1}
+CAGR ⇐ {((¯1⊑×`1+𝕩)⋆tdy÷≠𝕩)-1}
 
 # Annualized volatility
-AnnVol ⇐ {(Pstd 𝕩)×√252}
+AnnVol ⇐ {(Pstd 𝕩)×√tdy}
 
 # Calmar ratio (CAGR / |MaxDD|)
-Calmar ⇐ {(CAGR 𝕩) ÷ (|MaxDD 𝕩)⌈1e¯10}
+Calmar ⇐ {(CAGR 𝕩) ÷ (|MaxDD 𝕩)⌈eps}
 
 # Win rate (positive days / active days)
 WinRate ⇐ {
@@ -244,7 +263,7 @@ WinRate ⇐ {
 
 # Profit factor (gross profit / gross loss)
 ProfitFactor ⇐ {
-  (+´(𝕩>0)×𝕩) ÷ (|+´(𝕩<0)×𝕩)⌈1e¯10
+  (+´(𝕩>0)×𝕩) ÷ (|+´(𝕩<0)×𝕩)⌈eps
 }
 
 # Average winning return
@@ -272,14 +291,14 @@ Exposure ⇐ TimeIn
 Skew ⇐ {
   m ← (+´÷≠)𝕩
   s ← Pstd 𝕩
-  (+´((𝕩-m)÷s⌈1e¯10)⋆3) ÷ ≠𝕩
+  (+´((𝕩-m)÷s⌈eps)⋆3) ÷ ≠𝕩
 }
 
 # Excess kurtosis (fourth standardized moment minus 3)
 Kurt ⇐ {
   m ← (+´÷≠)𝕩
   s ← Pstd 𝕩
-  ¯3 + (+´((𝕩-m)÷s⌈1e¯10)⋆4) ÷ ≠𝕩
+  ¯3 + (+´((𝕩-m)÷s⌈eps)⋆4) ÷ ≠𝕩
 }
 
 # ── Reporting ────────────────────────────────
@@ -319,37 +338,30 @@ Report ⇐ {
     (16 Pad l) ∾ sv
   }
 
-  # Compute all metrics
-  s_tr ← Pct TotalRet strat ⋄ b_tr ← Pct TotalRet bh
-  s_cg ← Pct CAGR strat    ⋄ b_cg ← Pct CAGR bh
-  s_sh ← Rd Sharpe strat    ⋄ b_sh ← Rd Sharpe bh
-  s_so ← Rd Sortino strat   ⋄ b_so ← Rd Sortino bh
-  s_dd ← Pct MaxDD strat    ⋄ b_dd ← Pct MaxDD bh
-  s_ca ← Rd Calmar strat    ⋄ b_ca ← Rd Calmar bh
-  s_av ← Pct AnnVol strat   ⋄ b_av ← Pct AnnVol bh
-  s_wr ← Pct WinRate strat
-  s_pf ← Rd ProfitFactor strat
-  s_ex ← Pct Expectancy strat
-  s_td ← •Fmt Trades pos
-  s_ti ← Pct TimeIn pos
-  s_sk ← Rd Skew strat
-  s_ku ← Rd Kurt strat
+  paired ← ⟨
+    "Total:"‿(Pct TotalRet strat)‿(Pct TotalRet bh)
+    "CAGR:"‿(Pct CAGR strat)‿(Pct CAGR bh)
+    "Sharpe:"‿(Rd Sharpe strat)‿(Rd Sharpe bh)
+    "Sortino:"‿(Rd Sortino strat)‿(Rd Sortino bh)
+    "MaxDD:"‿(Pct MaxDD strat)‿(Pct MaxDD bh)
+    "MaxDD Dur:"‿(•Fmt MaxDDDur strat)‿(•Fmt MaxDDDur bh)
+    "Calmar:"‿(Rd Calmar strat)‿(Rd Calmar bh)
+    "Volatility:"‿(Pct AnnVol strat)‿(Pct AnnVol bh)
+  ⟩
+
+  singles ← ⟨
+    "Win Rate:"‿(Pct WinRate strat)
+    "Profit Factor:"‿(Rd ProfitFactor strat)
+    "Expectancy:"‿(Pct Expectancy strat)
+    "Trades:"‿(•Fmt Trades pos)
+    "Time In:"‿(Pct TimeIn pos)
+    "Skew:"‿(Rd Skew strat)
+    "Kurtosis:"‿(Rd Kurt strat)
+  ⟩
 
   •Out "═══ " ∾ name ∾ " ═══"
-  •Out Line "Total:"‿s_tr‿b_tr
-  •Out Line "CAGR:"‿s_cg‿b_cg
-  •Out Line "Sharpe:"‿s_sh‿b_sh
-  •Out Line "Sortino:"‿s_so‿b_so
-  •Out Line "MaxDD:"‿s_dd‿b_dd
-  •Out Line "Calmar:"‿s_ca‿b_ca
-  •Out Line "Volatility:"‿s_av‿b_av
-  •Out Solo "Win Rate:"‿s_wr
-  •Out Solo "Profit Factor:"‿s_pf
-  •Out Solo "Expectancy:"‿s_ex
-  •Out Solo "Trades:"‿s_td
-  •Out Solo "Time In:"‿s_ti
-  •Out Solo "Skew:"‿s_sk
-  •Out Solo "Kurtosis:"‿s_ku
+  •Out¨ Line¨ paired
+  •Out¨ Solo¨ singles
 
   # Verdict
   sharpe ← Sharpe strat
