@@ -14,6 +14,11 @@ bbq is a toolkit for backtesting trading strategies in BQN.
 It provides indicators, a simulation helper, metrics, and reporting.
 Bring your own hypothesis, describe it in a few lines and watch it go.
 
+## Requirements
+
+- [CBQN](https://github.com/dzaima/CBQN)
+- Python 3 + `pip install yfinance`
+
 ## Quick Start
 
 ```bash
