@@ -1,4 +1,4 @@
-# bbq — test suite
+# bbq — BQN Based Quant — test suite
 # tests/verify.bqn
 
 bt ← •Import "../engine/bt.bqn"
