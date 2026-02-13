@@ -1,0 +1,10 @@
+# Data
+data/*.csv
+
+# Working files
+CLAUDE.md
+WHITEPAPER.md
+
+# OS
+.DS_Store
+*~
