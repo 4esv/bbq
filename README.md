@@ -12,7 +12,7 @@ v0.2
 
 bbq is a toolkit for quantitative strategy development in BQN.
 It provides indicators, simulation, metrics, portfolio backtesting, and walk-forward validation.
-Bring your own hypothesis, describe it in a few lines and watch it go.
+Bring your own strategies, describe them in a few lines and watch them go.
 
 ## Architecture
 
