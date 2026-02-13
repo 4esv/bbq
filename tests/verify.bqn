@@ -558,6 +558,32 @@ g3 ← wf.Grid ⟨1‿2, 3‿4, 5‿6⟩
 
 pass +↩ 1 ⋄ •Out "  PASS  Grid (3 ranges)"
 
+# ── _WF ────────────────────────────────────
+
+# Trivial always-long strategy on synthetic data
+# 20 bars of steadily rising prices
+synth ← 100+↕20
+
+# Strategy: ignore params, go long always
+AlwaysLong ← {𝕨 ⋄ (≠𝕩)⥊1}
+
+wf_result ← synth AlwaysLong wf._WF ⟨6, 2, ⟨⟨1⟩⟩, 0, wf.Sharpe⟩
+
+# Verify fold count: 20 bars, train=6, test=2 → nf = 1+⌊(20-6-2)÷2 = 1+6 = 7
+! 7 = ≠wf_result.folds
+
+# OOS return length: 7 folds × (2-1) = 7 test returns (Ret shortens by 1)
+! 7 = ≠wf_result.oos_ret
+
+# Equity curve same length as OOS returns
+! (≠wf_result.oos_ret) = ≠wf_result.oos_eq
+
+# Summary metrics are finite
+! ¬ ∞ = |wf_result.summary.sharpe
+! ¬ ∞ = |wf_result.summary.maxdd
+
+pass +↩ 1 ⋄ •Out "  PASS  _WF"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
