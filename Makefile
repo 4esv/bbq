@@ -65,7 +65,7 @@ clean:
 	rm -f data/*.csv
 
 help:
-	@echo "bbq — BQN Backtesting for Quant"
+	@echo "bbq — BQN Based Quant"
 	@echo ""
 	@echo "  make new name=X      Create strategy from template"
 	@echo "  make fetch [ticker=X] Download market data"

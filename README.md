@@ -1,18 +1,29 @@
 # bbq
 
-**BQN Backtesting for Quant.**
+**BQN Based Quant.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-v0.1
+v0.2
 
 ---
 
 ## Overview
 
-bbq is a toolkit for backtesting trading strategies in BQN.
-It provides indicators, a simulation helper, metrics, and reporting.
+bbq is a toolkit for quantitative strategy development in BQN.
+It provides indicators, simulation, metrics, portfolio backtesting, and walk-forward validation.
 Bring your own hypothesis, describe it in a few lines and watch it go.
+
+## Architecture
+
+```
+engine/
+├── core.bqn    # Shared: data loading, indicators, signal utilities
+├── bt.bqn      # Backtesting: simulation, PnL, metrics, portfolio, reporting
+└── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
+```
+
+`core.bqn ← bt.bqn ← wf.bqn`. Each layer re-exports the one below it. Strategies import `bt.bqn`, walk-forward scripts import `wf.bqn`.
 
 ## Quick Start
 
@@ -63,6 +74,41 @@ Step ← {
 pos ← Step bt._Sim ⟨0,0⟩‿obs
 ```
 
+### Portfolio Backtesting
+
+Run multiple assets with weighted allocation:
+
+```bqn
+bt ← •Import "../engine/bt.bqn"
+# assets: list of ⟨positions, returns⟩ pairs
+weights ← 0.5‿0.3‿0.2
+port_ret ← weights bt.PortRun ⟨⟨pos_spy, ret_spy⟩, ⟨pos_qqq, ret_qqq⟩, ⟨pos_gld, ret_gld⟩⟩
+port_eq ← bt.PortEquity port_ret
+```
+
+### Walk-Forward Validation
+
+Test parameter robustness across rolling windows:
+
+```bqn
+wf ← •Import "../engine/wf.bqn"
+data ← wf.Validate wf.Load "../data/spy.csv"
+prices ← data.close
+
+# Strategy function: params 𝔽 prices → positions
+MACross ← {
+  fast‿slow ← 𝕨
+  f‿s ← wf.Align (fast wf.MA 𝕩)‿(slow wf.MA 𝕩)
+  f > s
+}
+
+grid ← wf.Grid ⟨8‿10‿12, 40‿50‿60⟩
+config ← ⟨500, 100, grid, 0.001, wf.Sharpe⟩
+
+results ← prices MACross wf._WF config
+"MA Cross"‿500‿100‿(≠grid) wf.WFReport results
+```
+
 ### Data Contract
 
 `Load` returns a namespace: `{dates⇐, close⇐, high⇐, low⇐, open⇐, vol⇐}`. All numeric arrays are flat floats, same length.
@@ -90,8 +136,6 @@ All dyadic: `n Indicator prices` unless noted. Output is shorter than input by t
 | `AD` | `AD data` | Accumulation/Distribution (monadic) |
 | `RMax` | `n RMax prices` | Rolling maximum |
 | `RMin` | `n RMin prices` | Rolling minimum |
-
-Tier 2 (DEMA, TEMA, ADX, Ichimoku, Keltner, CCI, Williams %R, Parabolic SAR) — coming soon.
 
 ### Signal Utilities
 
@@ -139,12 +183,31 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `Skew` | Return distribution asymmetry |
 | `Kurt` | Tail fatness (excess kurtosis) |
 
+### Portfolio
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `PortRun` | `weights PortRun assets` | Weighted multi-asset returns |
+| `PortCost` | `rates PortCost positions` | Combined transaction costs |
+| `PortEquity` | `PortEquity ret` | Equity curve (alias) |
+| `PortReport` | `name‿cpos PortReport assets‿cret` | Per-asset + combined report |
+
+### Walk-Forward
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Windows` | `train‿test Windows prices` | Rolling train/test splits |
+| `Grid` | `Grid ranges` | Cartesian product of param ranges |
+| `_WF` | `prices Strategy _WF config` | Walk-forward orchestrator |
+| `WFReport` | `name‿tr‿te‿gs WFReport results` | Print WF summary |
+
 ### Makefile
 
 ```
 make new name=X        Create strategy from template
 make fetch [ticker=X]  Download market data (default: SPY, 5y)
 make run name=X        Run a strategy
+make test              Run test suite
 make source name=X     Create data source (fetcher + parser)
 make clean             Remove data files
 ```
@@ -158,6 +221,8 @@ Five primitive patterns implement all indicators: windowed reduction, scan accum
 
 `_Sim` exists for strategies that need bar-by-bar state (trailing stops, regime filters, Kalman filters). It's not an engine, it only generates position arrays.
 Those arrays feed into the same `Run` pipeline as any array-computed position.
+
+Walk-forward validation splits history into rolling train/test windows, optimizes parameters on train, evaluates on test, and stitches out-of-sample segments. The OOS equity curve is the real result.
 
 ## License
 
