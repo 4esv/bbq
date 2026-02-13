@@ -4,29 +4,15 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-v0.1
+## Get Started
 
----
-
-## Overview
-
-bbq is a toolkit for backtesting trading strategies in BQN.
-It provides indicators, a simulation helper, metrics, and reporting.
-Bring your own hypothesis, describe it in a few lines and watch it go.
-
-## Requirements
-
-- [CBQN](https://github.com/dzaima/CBQN)
-- Python 3 + `pip install yfinance`
-
-## Quick Start
+Requires [CBQN](https://github.com/dzaima/CBQN) and Python 3 + `pip install yfinance`.
 
 ```bash
 make fetch                        # download SPY data (5yr daily)
 bqn strategies/ma_cross.bqn      # run the example strategy
+make new name=my_idea             # scaffold your own
 ```
-
-Output:
 
 ```
 ═══ MA Cross (10/50) ═══
@@ -38,12 +24,19 @@ Sharpe:         0.66        (B&H: 0.76)
 Verdict: Has potential, needs work
 ```
 
-## Usage
+## Makefile
 
-### Writing a Strategy
+```
+make new name=X        Create strategy from template
+make fetch [ticker=X]  Download market data (default: SPY, 5y)
+make run name=X        Run a strategy
+make source name=X     Create data source (fetcher + parser)
+make clean             Remove data files
+```
 
-Every strategy is a BQN script that imports the engine, loads data, computes indicators, generates positions, and prints a report.
-Positions are arrays of `1` (long), `0` (flat), and `¯1` (short). The engine multiplies positions by returns. This is the core concept.
+## Writing a Strategy
+
+Positions are arrays of `1` (long), `0` (flat), `¯1` (short). The engine multiplies positions by returns.
 
 Pure array pattern (no bar-by-bar state):
 
@@ -68,14 +61,29 @@ Step ← {
 pos ← Step bt._Sim ⟨0,0⟩‿obs
 ```
 
-### Data Contract
+For multiple series per bar, zip them: `obs ← <˘⍉> price‿lower‿ma`.
 
-`Load` returns a namespace: `{dates⇐, close⇐, high⇐, low⇐, open⇐, vol⇐}`. All numeric arrays are flat floats, same length.
-Any data source that returns this shape works with bbq. Use `make source name=X` to scaffold a new fetcher/parser pair.
+### Running the Backtest
+
+```bqn
+ret ← bt.Ret c                    # returns from prices
+warmup ← (≠c) - ≠pos              # auto-align
+strat ← pos bt.Run warmup↓ret     # strategy returns
+bh ← warmup↓ret                   # buy-and-hold benchmark
+"My Strategy"‿pos bt.Report strat‿bh
+```
+
+`Ret` computes returns. `Run` multiplies positions by returns. `Report` prints everything. `Cost` and `Equity` are there if you need them.
+
+## Data Contract
+
+`Load` returns a namespace: `{dates⇐, close⇐, high⇐, low⇐, open⇐, vol⇐}`. All numeric arrays are flat floats, same length. Any source that returns this shape works. Use `make source name=X` to scaffold a new fetcher/parser pair.
+
+## API Reference
 
 ### Indicators
 
-All dyadic: `n Indicator prices` unless noted. Output is shorter than input by the warmup period (no padding). EMA returns same length as input.
+All dyadic: `n Indicator prices` unless noted. Output is shorter than input by the warmup period (no padding). EMA returns same length.
 
 | Name | Signature | Description |
 |------|-----------|-------------|
@@ -110,12 +118,7 @@ All dyadic: `n Indicator prices` unless noted. Output is shorter than input by t
 
 ### Simulation
 
-`_Sim` is a 1-modifier that turns a step function into a position-generating scan.
-Your step function receives state (left) and an observation (right), returns new state.
-First element of state is always the position.
-
-For multiple series per bar, zip them: `obs ← <˘⍉> price‿lower‿ma`. Each observation becomes a list `⟨pᵢ, lᵢ, mᵢ⟩`.
-Nested state composes naturally: `⟨pos, peak, ⟨kx, kp⟩⟩`.
+`_Sim` is a 1-modifier that turns a step function into a position-generating scan. Your step function receives state (left) and an observation (right), returns new state. First element of state is always the position.
 
 ### Metrics
 
@@ -142,25 +145,11 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `Skew` | Return distribution asymmetry |
 | `Kurt` | Tail fatness (excess kurtosis) |
 
-### Makefile
-
-```
-make new name=X        Create strategy from template
-make fetch [ticker=X]  Download market data (default: SPY, 5y)
-make run name=X        Run a strategy
-make source name=X     Create data source (fetcher + parser)
-make clean             Remove data files
-```
-
 ## Design
 
-A backtest is a fold. Indicators are array operations. Positions are arrays of 1, 0, and ¯1. The engine multiplies positions by returns.
+Two phases: indicators (pure array ops, SIMD-friendly) and execution (compound-state scan, sequential). Five primitive patterns implement all indicators: windowed reduction, scan accumulation, shifted arrays, element-wise arithmetic, and compound scan.
 
-The architecture has two phases: indicators (pure array ops, embarrassingly parallel, SIMD-friendly) and execution (compound-state scan, inherently sequential).
-Five primitive patterns implement all indicators: windowed reduction, scan accumulation, shifted arrays, element-wise arithmetic, and compound scan.
-
-`_Sim` exists for strategies that need bar-by-bar state (trailing stops, regime filters, Kalman filters). It's not an engine, it only generates position arrays.
-Those arrays feed into the same `Run` pipeline as any array-computed position.
+`_Sim` exists for strategies that need bar-by-bar state (trailing stops, regime filters, Kalman filters). It generates position arrays that feed into the same `Run` pipeline as any array-computed position.
 
 ## License
 
