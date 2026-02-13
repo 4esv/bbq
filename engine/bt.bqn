@@ -126,3 +126,33 @@ AD ⇐ {
   mfm ← ((c-l)-(h-c)) ÷ rng⌈1e¯10
   +` mfm × v
 }
+
+# ── Signal Utilities ─────────────────────────
+
+# fast Cross slow — 1 where fast crosses above slow
+Cross ⇐ {(𝕨≥𝕩) ∧ (»𝕨)<»𝕩}
+
+# fast CrossDown slow — 1 where fast crosses below slow
+CrossDown ⇐ {(𝕨≤𝕩) ∧ (»𝕨)>»𝕩}
+
+# n Mask arr — zero first n elements, same length
+Mask ⇐ {(𝕨⥊0)∾𝕨↓𝕩}
+
+# Fill signals — forward-fill: hold last non-zero
+Fill ⇐ {(⊑𝕩){𝕩+(𝕩=0)×𝕨}`𝕩}
+
+# level Thresh values — 1 where value crosses above level
+Thresh ⇐ {(𝕩>𝕨) ∧ (»𝕩)≤𝕨}
+
+# level ThreshDown values — 1 where value crosses below level
+ThreshDown ⇐ {(𝕩<𝕨) ∧ (»𝕩)≥𝕨}
+
+# n Hold positions — min n-bar holding period
+Hold ⇐ {
+  n ← 𝕨 ⋄ pos ← 0 ⋄ count ← 0
+  {
+    count>0 ? count-↩1 ⋄ pos;
+    𝕩≠pos  ? count↩(𝕩≠0)×n-1 ⋄ pos↩𝕩;
+    pos
+  }¨ 𝕩
+}
