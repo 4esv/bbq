@@ -75,3 +75,66 @@ _WF ⇐ {
 
   {folds⇐fold_results, oos_ret⇐oos_ret, oos_eq⇐oos_eq, summary⇐summary}
 }
+
+# name‿train‿test‿grid_size WFReport results — print walk-forward summary
+WFReport ⇐ {
+  name‿tr‿te‿gs ← 𝕨
+  r ← 𝕩
+
+  Pct ← {
+    v ← ⌊0.5+1000×|𝕩
+    d ← •Fmt 10|v
+    w ← •Fmt ⌊v÷10
+    ((𝕩≥0)⊑"-+"∾¨<"") ∾ w ∾ "." ∾ d ∾ "%"
+  }
+  Rd ← {
+    v ← ⌊0.5+100×|𝕩
+    d ← •Fmt 100|v
+    d ↩ ((2>≠d)/"0") ∾ d
+    w ← •Fmt ⌊v÷100
+    ((𝕩<0)/"-") ∾ w ∾ "." ∾ d
+  }
+  Pad ← {(𝕨⌈≠𝕩)↑𝕩}
+
+  •Out "═══ Walk-Forward: " ∾ name ∾ " ═══"
+  •Out "Folds:        " ∾ •Fmt ≠r.folds
+  •Out "Train window: " ∾ (•Fmt tr) ∾ " bars"
+  •Out "Test window:  " ∾ (•Fmt te) ∾ " bars"
+  •Out "Grid size:    " ∾ (•Fmt gs) ∾ " combinations"
+  •Out ""
+
+  •Out "Fold  Best Params       Train     Test"
+  •Out "────  ───────────       ─────     ────"
+  {
+    f ← 𝕩⊑r.folds
+    pstr ← 1↓ ∾ "‿"⊸∾¨ •Fmt¨ f.params
+    •Out (6 Pad •Fmt 𝕩) ∾ (18 Pad pstr) ∾ (10 Pad Rd f.train_score) ∾ Rd f.test_score
+  }¨ ↕≠r.folds
+
+  •Out ""
+  •Out "─── Out-of-Sample Aggregate ───"
+  •Out "Sharpe:         " ∾ Rd r.summary.sharpe
+  •Out "Total:          " ∾ Pct r.summary.total_ret
+  •Out "MaxDD:          " ∾ Pct r.summary.maxdd
+  •Out "Calmar:         " ∾ Rd r.summary.calmar
+
+  # Param stability: count most common param tuple
+  all_params ← {𝕩.params}¨ r.folds
+  counts ← {p ← 𝕩 ⋄ +´{p≡𝕩}¨ all_params}¨ all_params
+  best_count ← ⌈´counts
+  best_param ← (⊑⍒counts)⊑all_params
+  pstr ← 1↓ ∾ "‿"⊸∾¨ •Fmt¨ best_param
+  •Out "Param Stability: " ∾ (•Fmt best_count) ∾ "/" ∾ (•Fmt ≠r.folds) ∾ " folds chose " ∾ pstr
+
+  # Verdict
+  sharpe ← r.summary.sharpe
+  maxdd ← r.summary.maxdd
+  verdict ← {
+    maxdd<¯0.40 ? "Max drawdown > 40%, reconsider";
+    sharpe≥1.0  ? "Worth paper trading";
+    sharpe≥0.5  ? "Has potential, needs work";
+    "Not worth pursuing"
+  }
+  •Out "───"
+  •Out "Verdict: " ∾ verdict
+}
