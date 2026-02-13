@@ -187,3 +187,100 @@ Cost ⇐ {𝕨 × |-⟜»𝕩}
 
 # Equity ret → equity curve starting at 1
 Equity ⇐ {×`1+𝕩}
+
+# ── Metrics ──────────────────────────────────
+
+# Internal: drawdown series from returns
+DdSeries ← {
+  eq ← ×`1+𝕩
+  mx ← ⌈`eq
+  (eq-mx)÷mx
+}
+
+# Internal: population std
+Pstd ← {m←(+´÷≠)𝕩 ⋄ √(+´(𝕩-m)⋆2)÷≠𝕩}
+
+# Annualized Sharpe ratio (Rf=0)
+Sharpe ⇐ {(√252) × ((+´÷≠)𝕩) ÷ (Pstd 𝕩)⌈1e¯10}
+
+# Sortino ratio (downside deviation only)
+Sortino ⇐ {
+  m ← (+´÷≠)𝕩
+  dd ← 0⌊𝕩
+  ds ← √(+´dd⋆2)÷≠𝕩
+  (√252) × m ÷ ds⌈1e¯10
+}
+
+# Maximum drawdown (negative number)
+MaxDD ⇐ {⌊´ DdSeries 𝕩}
+
+# Longest drawdown duration (bars)
+MaxDDDur ⇐ {
+  dd ← DdSeries 𝕩
+  # Count consecutive bars where dd < 0
+  run ← 0 ⋄ best ← 0
+  {
+    dd ← 𝕩
+    dd<0 ? run+↩1 ⋄ best↩best⌈run;
+    run↩0
+  }¨ dd
+  best⌈run
+}
+
+# Total cumulative return
+TotalRet ⇐ {¯1+(¯1⊑×`1+𝕩)}
+
+# Compound annual growth rate (252 days/yr)
+CAGR ⇐ {((¯1⊑×`1+𝕩)⋆252÷≠𝕩)-1}
+
+# Annualized volatility
+AnnVol ⇐ {(Pstd 𝕩)×√252}
+
+# Calmar ratio (CAGR / |MaxDD|)
+Calmar ⇐ {(CAGR 𝕩) ÷ (|MaxDD 𝕩)⌈1e¯10}
+
+# Win rate (positive days / active days)
+WinRate ⇐ {
+  active ← 𝕩≠0
+  (+´𝕩>0) ÷ (+´active)⌈1
+}
+
+# Profit factor (gross profit / gross loss)
+ProfitFactor ⇐ {
+  (+´(𝕩>0)×𝕩) ÷ (|+´(𝕩<0)×𝕩)⌈1e¯10
+}
+
+# Average winning return
+AvgWin ⇐ {w←(𝕩>0)/𝕩 ⋄ 0=≠w ? 0; w←(𝕩>0)/𝕩 ⋄ (+´÷≠)w}
+
+# Average losing return (negative number)
+AvgLoss ⇐ {l←(𝕩<0)/𝕩 ⋄ 0=≠l ? 0; l←(𝕩<0)/𝕩 ⋄ (+´÷≠)l}
+
+# Expectancy (expected value per trade)
+Expectancy ⇐ {
+  wr ← WinRate 𝕩
+  (wr × AvgWin 𝕩) + (1-wr) × AvgLoss 𝕩
+}
+
+# Trades — count position changes (takes positions)
+Trades ⇐ {+´(»𝕩)≠𝕩}
+
+# Time in market (takes positions)
+TimeIn ⇐ {(+´𝕩≠0)÷≠𝕩}
+
+# Exposure — alias for TimeIn
+Exposure ⇐ TimeIn
+
+# Skewness (third standardized moment)
+Skew ⇐ {
+  m ← (+´÷≠)𝕩
+  s ← Pstd 𝕩
+  (+´((𝕩-m)÷s⌈1e¯10)⋆3) ÷ ≠𝕩
+}
+
+# Excess kurtosis (fourth standardized moment minus 3)
+Kurt ⇐ {
+  m ← (+´÷≠)𝕩
+  s ← Pstd 𝕩
+  ¯3 + (+´((𝕩-m)÷s⌈1e¯10)⋆4) ÷ ≠𝕩
+}
