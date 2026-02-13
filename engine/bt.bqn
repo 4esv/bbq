@@ -156,3 +156,17 @@ Hold ⇐ {
     pos
   }¨ 𝕩
 }
+
+# ── Simulation ───────────────────────────────
+
+# Step _Sim init‿obs → positions
+# Step: state 𝔽 observation → new_state (first element = position)
+_Sim ⇐ {
+  init‿obs ← 𝕩
+  state ← init
+  Fn ← 𝔽
+  {
+    state ↩ state Fn 𝕩
+    ⊑state
+  }¨ obs
+}
