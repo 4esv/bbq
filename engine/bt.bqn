@@ -1,5 +1,5 @@
 # bbq — BQN Backtesting for Quant
-# engine/bt.bqn — all public API
+# engine/bt.bqn
 
 # ── Data ─────────────────────────────────────
 
@@ -72,7 +72,6 @@ MACD ⇐ {
   fast‿slow‿sig ← 𝕨
   ml ← (fast EMA 𝕩) - slow EMA 𝕩
   sl ← sig EMA ml
-  n ← ≠sl
   ml‿sl‿(ml-sl)
 }
 
@@ -217,11 +216,9 @@ MaxDD ⇐ {⌊´ DdSeries 𝕩}
 # Longest drawdown duration (bars)
 MaxDDDur ⇐ {
   dd ← DdSeries 𝕩
-  # Count consecutive bars where dd < 0
   run ← 0 ⋄ best ← 0
   {
-    dd ← 𝕩
-    dd<0 ? run+↩1 ⋄ best↩best⌈run;
+    𝕩<0 ? run+↩1 ⋄ best↩best⌈run;
     run↩0
   }¨ dd
   best⌈run
@@ -251,10 +248,10 @@ ProfitFactor ⇐ {
 }
 
 # Average winning return
-AvgWin ⇐ {w←(𝕩>0)/𝕩 ⋄ 0=≠w ? 0; w←(𝕩>0)/𝕩 ⋄ (+´÷≠)w}
+AvgWin ⇐ {w←(𝕩>0)/𝕩 ⋄ (+´w)÷(≠w)⌈1}
 
 # Average losing return (negative number)
-AvgLoss ⇐ {l←(𝕩<0)/𝕩 ⋄ 0=≠l ? 0; l←(𝕩<0)/𝕩 ⋄ (+´÷≠)l}
+AvgLoss ⇐ {l←(𝕩<0)/𝕩 ⋄ (+´l)÷(≠l)⌈1}
 
 # Expectancy (expected value per trade)
 Expectancy ⇐ {
@@ -297,8 +294,7 @@ Report ⇐ {
     v ← ⌊0.5+1000×|𝕩
     d ← •Fmt 10|v
     w ← •Fmt ⌊v÷10
-    s ← ((𝕩≥0)⊑"-+"∾¨<"") ∾ w ∾ "." ∾ d ∾ "%"
-    s
+    ((𝕩≥0)⊑"-+"∾¨<"") ∾ w ∾ "." ∾ d ∾ "%"
   }
 
   # Round to 2 decimal places with sign
@@ -307,8 +303,7 @@ Report ⇐ {
     d ← •Fmt 100|v
     d ↩ ((2>≠d)/"0") ∾ d
     w ← •Fmt ⌊v÷100
-    s ← ((𝕩<0)/"-") ∾ w ∾ "." ∾ d
-    s
+    ((𝕩<0)/"-") ∾ w ∾ "." ∾ d
   }
 
   # Right-pad string to width
