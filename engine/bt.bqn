@@ -170,3 +170,20 @@ _Sim ⇐ {
     ⊑state
   }¨ obs
 }
+
+# ── Backtest Core ────────────────────────────
+
+# Ret prices → simple returns (1 shorter than input)
+Ret ⇐ {(1↓𝕩-»𝕩) ÷ 1↓»𝕩}
+
+# LogRet prices → log returns (1 shorter than input)
+LogRet ⇐ {1↓ ⋆⁼ 𝕩÷»𝕩}
+
+# pos Run ret → strategy returns
+Run ⇐ ×
+
+# rate Cost pos → transaction cost array
+Cost ⇐ {𝕨 × |-⟜»𝕩}
+
+# Equity ret → equity curve starting at 1
+Equity ⇐ {×`1+𝕩}
