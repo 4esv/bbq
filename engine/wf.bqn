@@ -10,7 +10,8 @@ bt ← •Import "bt.bqn"
  _Sim, Ret, LogRet, Run, Cost, Equity,
  Sharpe, Sortino, MaxDD, MaxDDDur, TotalRet, CAGR, AnnVol, Calmar,
  WinRate, ProfitFactor, AvgWin, AvgLoss, Expectancy, Trades, TimeIn, Exposure, Skew, Kurt,
- Report, PortRun, PortCost, PortEquity, PortReport⟩ ⇐ bt
+ Report, PortRun, PortCost, PortEquity, PortReport,
+ Pct, Rd, Pad⟩ ⇐ bt
 
 # ── Walk-Forward ───────────────────────────
 
@@ -39,7 +40,6 @@ _WF ⇐ {
   prices ← 𝕨
 
   folds ← tr‿te Windows prices
-  ret_all ← bt.Ret prices
   fold_results ← ⟨⟩
 
   {
@@ -80,21 +80,6 @@ _WF ⇐ {
 WFReport ⇐ {
   name‿tr‿te‿gs ← 𝕨
   r ← 𝕩
-
-  Pct ← {
-    v ← ⌊0.5+1000×|𝕩
-    d ← •Fmt 10|v
-    w ← •Fmt ⌊v÷10
-    ((𝕩≥0)⊑"-+"∾¨<"") ∾ w ∾ "." ∾ d ∾ "%"
-  }
-  Rd ← {
-    v ← ⌊0.5+100×|𝕩
-    d ← •Fmt 100|v
-    d ↩ ((2>≠d)/"0") ∾ d
-    w ← •Fmt ⌊v÷100
-    ((𝕩<0)/"-") ∾ w ∾ "." ∾ d
-  }
-  Pad ← {(𝕨⌈≠𝕩)↑𝕩}
 
   •Out "═══ Walk-Forward: " ∾ name ∾ " ═══"
   •Out "Folds:        " ∾ •Fmt ≠r.folds
