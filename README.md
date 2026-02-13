@@ -91,8 +91,6 @@ All dyadic: `n Indicator prices` unless noted. Output is shorter than input by t
 | `RMax` | `n RMax prices` | Rolling maximum |
 | `RMin` | `n RMin prices` | Rolling minimum |
 
-Tier 2 (DEMA, TEMA, ADX, Ichimoku, Keltner, CCI, Williams %R, Parabolic SAR) — coming soon.
-
 ### Signal Utilities
 
 | Name | Signature | Description |
