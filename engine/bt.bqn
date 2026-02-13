@@ -1,187 +1,17 @@
-# bbq — BQN Backtesting for Quant
-# engine/bt.bqn
+# bbq — BQN Based Quant
+# engine/bt.bqn — backtesting engine
 
-# ── Constants ────────────────────────────────
+core ← •Import "core.bqn"
 
-eps ← 1e¯10  # division guard
-tdy ← 252    # trading days/year
+# Re-export core (backwards compat — strategies only import bt.bqn)
+⟨Load, Validate, Align,
+ MA, EMA, WMA, Std, RSI, MACD, ATR, Mom, ROC, Stoch, BB, OBV, VWAP, AD, RMax, RMin,
+ Cross, CrossDown, Mask, Fill, Thresh, ThreshDown, Hold⟩ ⇐ core
 
-# ── Data ─────────────────────────────────────
-
-# NOTE: yfinance CSV format: 3 header lines, then Date,Close,High,Low,Open,Volume
-Split ← (⊢-˜+`×¬)∘=⟜','⊸⊔
-
-Load ⇐ {
-  lines ← •FLines 𝕩
-  rows ← Split¨ 3↓lines
-  ! ∧´6≤≠¨rows
-  dates ⇐ 0⊸⊑¨ rows
-  close ⇐ •ParseFloat¨ 1⊸⊑¨ rows
-  high  ⇐ •ParseFloat¨ 2⊸⊑¨ rows
-  low   ⇐ •ParseFloat¨ 3⊸⊑¨ rows
-  open  ⇐ •ParseFloat¨ 4⊸⊑¨ rows
-  vol   ⇐ •ParseFloat¨ 5⊸⊑¨ rows
-}
-
-Validate ⇐ {
-  ! 0<≠𝕩.close
-  n ← ≠𝕩.close
-  ! n=≠𝕩.high
-  ! n=≠𝕩.low
-  ! n=≠𝕩.open
-  ! n=≠𝕩.vol
-  ! ∧´𝕩.close>0
-  ! ∧´𝕩.high>0
-  ! ∧´𝕩.low>0
-  ! ∧´𝕩.open>0
-  ! ∧´𝕩.high≥𝕩.low
-  ! ∧´𝕩.high≥𝕩.close
-  ! ∧´𝕩.high≥𝕩.open
-  ! ∧´𝕩.low≤𝕩.close
-  ! ∧´𝕩.low≤𝕩.open
-  𝕩
-}
-
-Align ⇐ {m←⌊´≠¨𝕩 ⋄ (-m)↑¨𝕩}
-
-# ── Indicators ───────────────────────────────
-
-# Wilder smoothing (EMA with α=1/n). Used by RSI and ATR.
-Wilder ← {a←÷𝕨 ⋄ (⊑𝕩){(a×𝕩)+(1-a)×𝕨}`𝕩}
-
-# n RMax prices — rolling maximum
-RMax ⇐ {⌈´˘ 𝕨↕𝕩}
-
-# n RMin prices — rolling minimum
-RMin ⇐ {⌊´˘ 𝕨↕𝕩}
-
-# n MA prices — simple moving average, O(n) via prefix-sum
-MA ⇐ {
-  cs ← 0∾+`𝕩
-  ((𝕨↓cs) - ((-𝕨)↓cs)) ÷ 𝕨
-}
-
-# n EMA prices — exponential moving average, same length as input
-EMA ⇐ {
-  a ← 2÷1+𝕨
-  (⊑𝕩) {(a×𝕩)+(1-a)×𝕨}` 𝕩
-}
-
-# n WMA prices — weighted moving average
-WMA ⇐ {
-  w ← 1+↕𝕨
-  {(+´w×𝕩)÷+´w}˘ 𝕨↕𝕩
-}
-
-# n Std prices — rolling population standard deviation
-Std ⇐ {
-  {m←(+´÷≠)𝕩 ⋄ √(+´(𝕩-m)⋆2)÷≠𝕩}˘ 𝕨↕𝕩
-}
-
-# n Mom prices — momentum (price difference)
-Mom ⇐ {(𝕨↓𝕩) - ((-𝕨)↓𝕩)}
-
-# n ROC prices — rate of change as percentage
-ROC ⇐ {100 × ((𝕨↓𝕩) - ((-𝕨)↓𝕩)) ÷ (-𝕨)↓𝕩}
-
-# n RSI prices — relative strength index (0-100)
-RSI ⇐ {
-  deltas ← 1↓ 𝕩 - »𝕩
-  gains ← 0⌈deltas
-  losses ← 0⌈-deltas
-  ag ← 𝕨 Wilder gains
-  al ← 𝕨 Wilder losses
-  100 - 100÷1+ag÷al⌈eps
-}
-
-# fast‿slow‿sig MACD prices → macd‿signal‿hist
-MACD ⇐ {
-  fast‿slow‿sig ← 𝕨
-  ml ← (fast EMA 𝕩) - slow EMA 𝕩
-  sl ← sig EMA ml
-  ml‿sl‿(ml-sl)
-}
-
-# n ATR data — average true range, takes namespace {high,low,close}
-ATR ⇐ {
-  h ← 𝕩.high ⋄ l ← 𝕩.low ⋄ c ← 𝕩.close
-  hl ← h-l
-  hc ← |h - »c
-  lc ← |l - »c
-  tr ← hl⌈hc⌈lc
-  1↓ 𝕨 Wilder tr
-}
-
-# n Stoch data → k‿d — stochastic oscillator
-Stoch ⇐ {
-  c ← 𝕩.close ⋄ h ← 𝕩.high ⋄ l ← 𝕩.low
-  lo ← 𝕨 RMin l
-  hi ← 𝕨 RMax h
-  rng ← hi - lo
-  # NOTE: align close to window output (drop n-1 warmup bars)
-  k ← 100 × (((𝕨-1)↓c)-lo) ÷ rng⌈eps
-  d ← 3 MA k
-  k‿d
-}
-
-# n‿k BB prices → upper‿mid‿lower — Bollinger Bands
-BB ⇐ {
-  n‿k ← 𝕨
-  mid ← n MA 𝕩
-  sd ← n Std 𝕩
-  (mid+k×sd)‿mid‿(mid-k×sd)
-}
-
-# OBV close‿vol — on-balance volume (monadic)
-OBV ⇐ {
-  c‿v ← 𝕩
-  signs ← × -⟜» c
-  +` signs × v
-}
-
-# VWAP data — volume-weighted average price (monadic, takes namespace)
-VWAP ⇐ {
-  tp ← (𝕩.high + 𝕩.low + 𝕩.close) ÷ 3
-  (+`tp×𝕩.vol) ÷ +`𝕩.vol
-}
-
-# AD data — accumulation/distribution line (monadic, takes namespace)
-AD ⇐ {
-  h←𝕩.high ⋄ l←𝕩.low ⋄ c←𝕩.close ⋄ v←𝕩.vol
-  rng ← h-l
-  mfm ← ((c-l)-(h-c)) ÷ rng⌈eps
-  +` mfm × v
-}
-
-# ── Signal Utilities ─────────────────────────
-
-# fast Cross slow — 1 where fast crosses above slow
-Cross ⇐ {(𝕨≥𝕩) ∧ (»𝕨)<»𝕩}
-
-# fast CrossDown slow — 1 where fast crosses below slow
-CrossDown ⇐ {(𝕨≤𝕩) ∧ (»𝕨)>»𝕩}
-
-# n Mask arr — zero first n elements, same length
-Mask ⇐ {(𝕨⥊0)∾𝕨↓𝕩}
-
-# Fill signals — forward-fill: hold last non-zero
-Fill ⇐ {(⊑𝕩){𝕩+(𝕩=0)×𝕨}`𝕩}
-
-# level Thresh values — 1 where value crosses above level
-Thresh ⇐ {(𝕩>𝕨) ∧ (»𝕩)≤𝕨}
-
-# level ThreshDown values — 1 where value crosses below level
-ThreshDown ⇐ {(𝕩<𝕨) ∧ (»𝕩)≥𝕨}
-
-# n Hold positions — min n-bar holding period
-Hold ⇐ {
-  n ← 𝕨 ⋄ pos ← 0 ⋄ count ← 0
-  {
-    count>0 ? count-↩1 ⋄ pos;
-    𝕩≠pos  ? count↩(𝕩≠0)×n-1 ⋄ pos↩𝕩;
-    pos
-  }¨ 𝕩
-}
+# Internals bt needs
+eps ← core.eps
+tdy ← core.tdy
+Pstd ← core.Pstd
 
 # ── Simulation ───────────────────────────────
 
@@ -222,9 +52,6 @@ DdSeries ← {
   mx ← ⌈`eq
   (eq-mx)÷mx
 }
-
-# Internal: population std
-Pstd ← {m←(+´÷≠)𝕩 ⋄ √(+´(𝕩-m)⋆2)÷≠𝕩}
 
 # Annualized Sharpe ratio (Rf=0)
 Sharpe ⇐ {(√tdy) × ((+´÷≠)𝕩) ÷ (Pstd 𝕩)⌈eps}
@@ -301,32 +128,34 @@ Kurt ⇐ {
   ¯3 + (+´((𝕩-m)÷s⌈eps)⋆4) ÷ ≠𝕩
 }
 
+# ── Reporting helpers ────────────────────────
+
+# Format percentage with sign
+Pct ← {
+  v ← ⌊0.5+1000×|𝕩
+  d ← •Fmt 10|v
+  w ← •Fmt ⌊v÷10
+  ((𝕩≥0)⊑"-+"∾¨<"") ∾ w ∾ "." ∾ d ∾ "%"
+}
+
+# Round to 2 decimal places with sign
+Rd ← {
+  v ← ⌊0.5+100×|𝕩
+  d ← •Fmt 100|v
+  d ↩ ((2>≠d)/"0") ∾ d
+  w ← •Fmt ⌊v÷100
+  ((𝕩<0)/"-") ∾ w ∾ "." ∾ d
+}
+
+# Right-pad string to width
+Pad ← {(𝕨⌈≠𝕩)↑𝕩}
+
 # ── Reporting ────────────────────────────────
 
 # name‿pos Report strat_ret‿bh_ret — print formatted summary
 Report ⇐ {
   name‿pos ← 𝕨
   strat‿bh ← 𝕩
-
-  # Format percentage with sign
-  Pct ← {
-    v ← ⌊0.5+1000×|𝕩
-    d ← •Fmt 10|v
-    w ← •Fmt ⌊v÷10
-    ((𝕩≥0)⊑"-+"∾¨<"") ∾ w ∾ "." ∾ d ∾ "%"
-  }
-
-  # Round to 2 decimal places with sign
-  Rd ← {
-    v ← ⌊0.5+100×|𝕩
-    d ← •Fmt 100|v
-    d ↩ ((2>≠d)/"0") ∾ d
-    w ← •Fmt ⌊v÷100
-    ((𝕩<0)/"-") ∾ w ∾ "." ∾ d
-  }
-
-  # Right-pad string to width
-  Pad ← {(𝕨⌈≠𝕩)↑𝕩}
 
   # Format a metric line: label, strategy value, benchmark value
   Line ← {l‿sv‿bv:
