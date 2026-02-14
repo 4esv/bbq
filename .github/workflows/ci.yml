@@ -30,7 +30,9 @@ jobs:
           cd ~/cbqn && make
 
       - name: Add CBQN to PATH
-        run: echo "$HOME/cbqn" >> "$GITHUB_PATH"
+        run: |
+          ln -sf ~/cbqn/BQN ~/cbqn/bqn
+          echo "$HOME/cbqn" >> "$GITHUB_PATH"
 
       - name: Run tests
         run: make test
