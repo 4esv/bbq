@@ -259,6 +259,69 @@ make clean             Remove data files
 make setup             Install pre-commit hook
 ```
 
+## Benchmarks
+
+CBQN vs Python (pandas/numpy) vs Julia on synthetic GBM data. Median of 10 runs, 3 warmup.
+
+### Indicators (MA, EMA, RSI, ATR, BB, Stoch, OBV, VWAP)
+
+| Rows | BQN | pandas | numpy | Julia |
+|------|-----|--------|-------|-------|
+| 1,000 | 5ms | 211ms | 211ms | 1,087ms |
+| 10,000 | 15ms | 213ms | 219ms | 1,088ms |
+| 100,000 | 124ms | 275ms | 345ms | 1,180ms |
+| 1,000,000 | 1,453ms | 855ms | 1,556ms | 1,774ms |
+
+### Signals (Cross, Fill, Hold, Thresh)
+
+| Rows | BQN | pandas | numpy | Julia |
+|------|-----|--------|-------|-------|
+| 1,000 | 5ms | 214ms | 211ms | 760ms |
+| 10,000 | 16ms | 239ms | 248ms | 803ms |
+| 100,000 | 128ms | 321ms | 332ms | 876ms |
+| 1,000,000 | 1,451ms | 1,362ms | 1,383ms | 1,410ms |
+
+### Full Pipeline (indicators → signals → backtest → metrics)
+
+| Rows | BQN | pandas | numpy | Julia |
+|------|-----|--------|-------|-------|
+| 1,000 | 5ms | 213ms | 213ms | 676ms |
+| 10,000 | 15ms | 233ms | 226ms | 708ms |
+| 100,000 | 117ms | 289ms | 295ms | 802ms |
+| 1,000,000 | 1,385ms | 954ms | 952ms | 1,162ms |
+
+### Walk-Forward Grid Search (20 param combos, 504/126 train/test)
+
+| Rows | BQN | Python | Julia |
+|------|-----|--------|-------|
+| 10,000 | 26ms | 254ms | 997ms |
+| 100,000 | 225ms | 639ms | 1,110ms |
+
+### CSV Loading
+
+| Rows | BQN | pandas | Julia |
+|------|-----|--------|-------|
+| 1,000 | 4ms | 215ms | 1,338ms |
+| 100,000 | 103ms | 256ms | 1,403ms |
+| 1,000,000 | 1,231ms | 685ms | 1,896ms |
+
+### Memory (1M rows, indicators)
+
+| BQN | pandas | numpy | Julia |
+|-----|--------|-------|-------|
+| 1,003 MB | 478 MB | 644 MB | 719 MB |
+
+### Code Size
+
+| Benchmark | BQN | Python | Julia |
+|-----------|-----|--------|-------|
+| indicators | 25 | 162 (6.5x) | 161 (6.4x) |
+| signals | 26 | 132 (5.1x) | 118 (4.5x) |
+| pipeline | 26 | 129 (5.0x) | 90 (3.5x) |
+| loading | 6 | 49 (8.2x) | 48 (8.0x) |
+
+Benchmark source on the `bench` branch.
+
 ## Design
 
 A backtest is a fold. Indicators are array operations. Positions are arrays of 1, 0, and ¯1. The engine multiplies positions by returns.
