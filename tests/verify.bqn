@@ -713,12 +713,11 @@ pass +↩ 1 ⋄ •Out "  PASS  Edge: single trade"
 
 # Random OHLCV generator: sorts 4 random values per bar to get valid low≤open≤close≤high
 GenOHLCV ← {
-  n ← 𝕩
-  r ← 1 + (4×n) •rand.Range 100
-  s ← ⍉ ∧˘ (n‿4) ⥊ r
+  r ← 1 + (4×𝕩) •rand.Range 100
+  s ← ⍉ ∧˘ (𝕩‿4) ⥊ r
   low←0⊏s ⋄ open←1⊏s ⋄ close←2⊏s ⋄ high←3⊏s
-  vol ← 1 + n •rand.Range 10000
-  dates ← •Fmt¨ ↕n
+  vol ← 1 + 𝕩 •rand.Range 10000
+  dates ← •Fmt¨ ↕𝕩
   {dates⇐dates, close⇐close, high⇐high, low⇐low, open⇐open, vol⇐vol}
 }
 
@@ -735,41 +734,23 @@ GenOHLCV ← {
 
 pass +↩ 1 ⋄ •Out "  PASS  Prop: MA/EMA/WMA bounded"
 
-# ── RSI in [0,100] ────────────────────────────
+# ── RSI/Stoch/BB ranges ──────────────────────
 
 {
   d ← GenOHLCV 50
   rsi ← 14 bt.RSI d.close
   ! ∧´ (rsi≥0) ∧ rsi≤100
-  0
-}¨ ↕10
-
-pass +↩ 1 ⋄ •Out "  PASS  Prop: RSI range"
-
-# ── Stoch in [0,100] ──────────────────────────
-
-{
-  d ← GenOHLCV 50
   k‿kd ← 5 bt.Stoch d
   ! ∧´ (k≥0) ∧ k≤100
-  0
-}¨ ↕10
-
-pass +↩ 1 ⋄ •Out "  PASS  Prop: Stoch range"
-
-# ── BB ordering ───────────────────────────────
-
-{
-  d ← GenOHLCV 50
   u‿m‿l ← 10‿2 bt.BB d.close
   ! ∧´ u ≥ m
   ! ∧´ m ≥ l
   0
 }¨ ↕10
 
-pass +↩ 1 ⋄ •Out "  PASS  Prop: BB ordering"
+pass +↩ 1 ⋄ •Out "  PASS  Prop: RSI/Stoch/BB ranges"
 
-# ── MaxDD in [-1,0] ──────────────────────────
+# ── Metrics ranges ───────────────────────────
 
 {
   d ← GenOHLCV 50
@@ -777,34 +758,14 @@ pass +↩ 1 ⋄ •Out "  PASS  Prop: BB ordering"
   dd ← bt.MaxDD r
   ! dd ≤ 0
   ! dd ≥ ¯1
-  0
-}¨ ↕10
-
-pass +↩ 1 ⋄ •Out "  PASS  Prop: MaxDD range"
-
-# ── WinRate in [0,1] ─────────────────────────
-
-{
-  d ← GenOHLCV 50
-  r ← bt.Ret d.close
   wr ← bt.WinRate r
   ! wr ≥ 0
   ! wr ≤ 1
-  0
-}¨ ↕10
-
-pass +↩ 1 ⋄ •Out "  PASS  Prop: WinRate range"
-
-# ── TotalRet = equity - 1 ────────────────────
-
-{
-  d ← GenOHLCV 50
-  r ← bt.Ret d.close
   ((¯1⊑bt.Equity r) - 1) As bt.TotalRet r
   0
 }¨ ↕10
 
-pass +↩ 1 ⋄ •Out "  PASS  Prop: TotalRet = equity - 1"
+pass +↩ 1 ⋄ •Out "  PASS  Prop: MaxDD/WinRate/TotalRet"
 
 # ── Cross/CrossDown boolean ───────────────────
 
