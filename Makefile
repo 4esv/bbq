@@ -1,4 +1,4 @@
-.PHONY: new fetch run test source clean setup help
+.PHONY: new fetch run test source clean setup branch help
 
 define STRATEGY_TEMPLATE
 # Strategy: $(name)
@@ -71,6 +71,17 @@ setup:
 	 ln -sf "$$GITDIR/../hooks/pre-commit" "$$GITDIR/hooks/pre-commit"
 	@echo "Installed pre-commit hook"
 
+# Create feature branch worktree with Claude Code config
+# Usage: make branch name=my-feature
+branch:
+	@test -n "$(name)" || (echo "Usage: make branch name=feature-name" && exit 1)
+	@ROOT=$$(git rev-parse --git-common-dir)/.. && \
+	 git worktree add "$$ROOT/$(name)" -b $(name) main && \
+	 ln -sf ../CLAUDE.md "$$ROOT/$(name)/CLAUDE.md" && \
+	 mkdir -p "$$ROOT/$(name)/.claude" && \
+	 ln -sf ../../.claude/agents "$$ROOT/$(name)/.claude/agents" && \
+	 echo "Created worktree $(name) with CLAUDE.md and .claude/agents"
+
 help:
 	@echo "bbq — BQN Based Quant"
 	@echo ""
@@ -81,3 +92,4 @@ help:
 	@echo "  make source name=X   Create data source (fetcher + parser)"
 	@echo "  make clean            Remove data files"
 	@echo "  make setup            Install pre-commit hook"
+	@echo "  make branch name=X   Create feature branch worktree"
