@@ -1,4 +1,4 @@
-.PHONY: new fetch run test source clean help
+.PHONY: new fetch run test source clean setup help
 
 define STRATEGY_TEMPLATE
 # Strategy: $(name)
@@ -65,6 +65,12 @@ source:
 clean:
 	rm -f data/*.csv
 
+# Install pre-commit hook (works from any worktree)
+setup:
+	@GITDIR=$$(git rev-parse --git-common-dir) && \
+	 ln -sf "$$GITDIR/../hooks/pre-commit" "$$GITDIR/hooks/pre-commit"
+	@echo "Installed pre-commit hook"
+
 help:
 	@echo "bbq — BQN Based Quant"
 	@echo ""
@@ -74,3 +80,4 @@ help:
 	@echo "  make test             Run test suite"
 	@echo "  make source name=X   Create data source (fetcher + parser)"
 	@echo "  make clean            Remove data files"
+	@echo "  make setup            Install pre-commit hook"

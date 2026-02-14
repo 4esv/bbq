@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -e
+echo "Running tests..."
+make test || { echo "Tests failed. Commit aborted."; exit 1; }

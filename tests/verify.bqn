@@ -650,6 +650,187 @@ csf ← 2‿4‿6‿8‿10
 
 pass +↩ 1 ⋄ •Out "  PASS  Compose single-feature"
 
+# ══ Edge Cases ═════════════════════════════════
+
+# ── Single element ─────────────────────────────
+
+⟨42⟩ Ae 1 bt.MA ⟨42⟩
+! 0 = ≠ 2 bt.MA ⟨42⟩
+⟨42⟩ Ae 3 bt.EMA ⟨42⟩
+! 0 = ≠ 2 bt.Std ⟨42⟩
+! 0 = ≠ 1 bt.Mom ⟨42⟩
+! 0 = ≠ 1 bt.ROC ⟨42⟩
+
+pass +↩ 1 ⋄ •Out "  PASS  Edge: single element"
+
+# ── Constant prices ────────────────────────────
+
+cc ← 50‿50‿50‿50‿50
+50‿50‿50‿50 Ae 2 bt.MA cc
+50‿50‿50‿50‿50 Ae 2 bt.EMA cc
+0‿0‿0‿0 Ae 2 bt.Std cc
+0‿0‿0‿0 Ae 1 bt.Mom cc
+0‿0‿0‿0 Ae 1 bt.ROC cc
+
+pass +↩ 1 ⋄ •Out "  PASS  Edge: constant prices"
+
+# ── Large price swings ─────────────────────────
+
+big ← 0.01‿10000‿0.01‿10000‿0.01
+eq_big ← bt.Equity bt.Ret big
+! ∧´ eq_big > 0
+! ∧´ ¬ ∞ = |eq_big
+
+pass +↩ 1 ⋄ •Out "  PASS  Edge: large swings"
+
+# ── Zero volume ────────────────────────────────
+
+zv ← {dates⇐"a"‿"b"‿"c", close⇐100‿102‿101, high⇐105‿107‿104, low⇐95‿99‿98, open⇐98‿100‿102, vol⇐0‿0‿0}
+0‿0‿0 Ae bt.OBV zv.close‿zv.vol
+vwap_zv ← bt.VWAP zv
+! 3 = ≠vwap_zv
+! ∧´ ¬ ∞ = |vwap_zv
+
+pass +↩ 1 ⋄ •Out "  PASS  Edge: zero volume"
+
+# ── All-long / all-short / all-flat ────────────
+
+er ← 0.02‿¯0.01‿0.03‿¯0.02
+0.02‿¯0.01‿0.03‿¯0.02 Ae (4⥊1) bt.Run er
+¯0.02‿0.01‿¯0.03‿0.02 Ae (4⥊¯1) bt.Run er
+0‿0‿0‿0 Ae (4⥊0) bt.Run er
+
+pass +↩ 1 ⋄ •Out "  PASS  Edge: all-long/short/flat"
+
+# ── Single trade ───────────────────────────────
+
+0‿0.05‿0 Ae (0‿1‿0) bt.Run 0.02‿0.05‿¯0.02
+2 As bt.Trades 0‿1‿0
+
+pass +↩ 1 ⋄ •Out "  PASS  Edge: single trade"
+
+# ══ Property Tests ═════════════════════════════
+
+# Random OHLCV generator: sorts 4 random values per bar to get valid low≤open≤close≤high
+GenOHLCV ← {
+  r ← 1 + (4×𝕩) •rand.Range 100
+  s ← ⍉ ∧˘ (𝕩‿4) ⥊ r
+  low←0⊏s ⋄ open←1⊏s ⋄ close←2⊏s ⋄ high←3⊏s
+  vol ← 1 + 𝕩 •rand.Range 10000
+  dates ← •Fmt¨ ↕𝕩
+  {dates⇐dates, close⇐close, high⇐high, low⇐low, open⇐open, vol⇐vol}
+}
+
+# ── MA/EMA/WMA bounded ────────────────────────
+
+{
+  d ← GenOHLCV 50 ⋄ c ← d.close
+  lo ← ⌊´c ⋄ hi ← ⌈´c
+  ma ← 5 bt.MA c ⋄ ! ∧´ (ma≥lo) ∧ ma≤hi
+  ema ← 5 bt.EMA c ⋄ ! ∧´ (ema≥lo) ∧ ema≤hi
+  wma ← 5 bt.WMA c ⋄ ! ∧´ (wma≥lo) ∧ wma≤hi
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: MA/EMA/WMA bounded"
+
+# ── RSI/Stoch/BB ranges ──────────────────────
+
+{
+  d ← GenOHLCV 50
+  rsi ← 14 bt.RSI d.close
+  ! ∧´ (rsi≥0) ∧ rsi≤100
+  k‿kd ← 5 bt.Stoch d
+  ! ∧´ (k≥0) ∧ k≤100
+  u‿m‿l ← 10‿2 bt.BB d.close
+  ! ∧´ u ≥ m
+  ! ∧´ m ≥ l
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: RSI/Stoch/BB ranges"
+
+# ── Metrics ranges ───────────────────────────
+
+{
+  d ← GenOHLCV 50
+  r ← bt.Ret d.close
+  dd ← bt.MaxDD r
+  ! dd ≤ 0
+  ! dd ≥ ¯1
+  wr ← bt.WinRate r
+  ! wr ≥ 0
+  ! wr ≤ 1
+  ((¯1⊑bt.Equity r) - 1) As bt.TotalRet r
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: MaxDD/WinRate/TotalRet"
+
+# ── Cross/CrossDown boolean ───────────────────
+
+{
+  d ← GenOHLCV 50 ⋄ c ← d.close
+  f‿s ← bt.Align (5 bt.MA c)‿(10 bt.MA c)
+  ! ∧´ (f bt.Cross s) ∊ 0‿1
+  ! ∧´ (f bt.CrossDown s) ∊ 0‿1
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: Cross/CrossDown boolean"
+
+# ── Indicator output lengths ──────────────────
+
+{
+  d ← GenOHLCV 50 ⋄ c ← d.close ⋄ n ← ≠c
+  ! (n-4) = ≠ 5 bt.MA c
+  ! n = ≠ 5 bt.EMA c
+  ! (n-4) = ≠ 5 bt.WMA c
+  ! (n-4) = ≠ 5 bt.Std c
+  ! (n-1) = ≠ 1 bt.Mom c
+  ! (n-1) = ≠ 1 bt.ROC c
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: indicator lengths"
+
+# ── Cost non-negative ─────────────────────────
+
+{
+  pos ← (50 •rand.Range 3) - 1
+  costs ← 0.001 bt.Cost pos
+  ! ∧´ costs ≥ 0
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: Cost non-negative"
+
+# ── Equity positive ──────────────────────────
+
+{
+  d ← GenOHLCV 50
+  r ← bt.Ret d.close
+  eq ← bt.Equity r
+  ! ∧´ eq > 0
+  (1+⊑r) As ⊑eq
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: Equity positive"
+
+# ── Mask zeroes prefix ───────────────────────
+
+{
+  n ← 1 + •rand.Range 9
+  arr ← 1 + 20 •rand.Range 100
+  m ← n bt.Mask arr
+  ! ∧´ 0 = n↑m
+  ! 20 = ≠m
+  0
+}¨ ↕10
+
+pass +↩ 1 ⋄ •Out "  PASS  Prop: Mask zeroes prefix"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""

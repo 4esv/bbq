@@ -147,7 +147,7 @@ OBV ⇐ {
 # VWAP data — volume-weighted average price (monadic, takes namespace)
 VWAP ⇐ {
   tp ← (𝕩.high + 𝕩.low + 𝕩.close) ÷ 3
-  (+`tp×𝕩.vol) ÷ +`𝕩.vol
+  (+`tp×𝕩.vol) ÷ (+`𝕩.vol)⌈eps
 }
 
 # AD data — accumulation/distribution line (monadic, takes namespace)
