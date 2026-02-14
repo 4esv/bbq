@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-v0.2
+v0.3
 
 ---
 
@@ -20,10 +20,13 @@ Bring your own strategies, describe them in a few lines and watch them go.
 engine/
 ├── core.bqn    # Shared: data loading, indicators, signal utilities
 ├── bt.bqn      # Backtesting: simulation, PnL, metrics, portfolio, reporting
-└── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
+├── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
+└── cmp.bqn     # Composition: normalization, scoring, thresholding
 ```
 
 `core.bqn ← bt.bqn ← wf.bqn`. Each layer re-exports the one below it. Strategies import `bt.bqn`, walk-forward scripts import `wf.bqn`.
+
+`cmp.bqn` imports `bt.bqn` internally but does not re-export it. Composed strategies import both `bt` and `cmp`.
 
 ## Quick Start
 
@@ -108,6 +111,42 @@ config ← ⟨500, 100, grid, 0.001, wf.Sharpe⟩
 results ← prices MACross wf._WF config
 "MA Cross"‿500‿100‿(≠grid) wf.WFReport results
 ```
+
+### Composed Strategies
+
+Multiple indicators can be fused into a single position signal: normalize each feature, compute a weighted score, and threshold into positions.
+
+```bqn
+bt ← •Import "../engine/bt.bqn"
+cmp ← •Import "../engine/cmp.bqn"
+
+data ← bt.Validate bt.Load "../data/spy.csv"
+c ← data.close
+
+# Build features (different lengths are fine — Score auto-aligns)
+sma ← 50 bt.MA c
+f1 ← ((-≠sma)↑c) - sma             # SMA distance
+f2 ← 14 bt.RSI c                    # RSI
+upper‿mid‿lower ← 20‿2 bt.BB c
+cb ← (-≠upper)↑c
+f3 ← (cb-lower)÷(upper-lower)+1e¯10 # BB position
+
+# ENorm: expanding-window z-score (no lookahead bias for standalone backtests)
+# Compose with Norm is for WF per-fold use where the full array is the training set
+pos ← 0.5 cmp.Thresh 0.4‿0.3‿0.3 cmp.Score cmp.ENorm¨ f1‿f2‿f3
+```
+
+`ENorm¨` z-scores each feature using only past data, `Score` aligns to the shortest and computes a weighted sum, `Thresh` maps to 1 (above level), ¯1 (below negative level), or 0 (between). Use `Compose` (which calls `Norm`) in walk-forward folds where the full array is the training set.
+
+### Composition
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Norm` | `Norm arr` | Z-score normalize, full-array (for WF per-fold use) |
+| `ENorm` | `ENorm arr` | Expanding-window z-score (no lookahead bias) |
+| `Score` | `weights Score features` | Weighted sum with auto-alignment |
+| `Thresh` | `level Thresh scores` | Level-based position mapper: 1/0/¯1 |
+| `Compose` | `weights‿level Compose features` | Full pipeline: Norm, score, threshold (WF use) |
 
 ### Data Contract
 

@@ -2,6 +2,7 @@
 data/*.csv
 
 # Working files
+.claude/
 CLAUDE.md
 WHITEPAPER.md
 
