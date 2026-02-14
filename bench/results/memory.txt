@@ -1,0 +1,7 @@
+=== Peak RSS Measurement (1M rows, indicators) ===
+
+BQN: 1002.8 MB (1051557888 bytes)
+Python (numpy): 643.6 MB (674873344 bytes)
+Python (pandas): 477.6 MB (500826112 bytes)
+Julia (base): 719.3 MB (754319360 bytes)
+
