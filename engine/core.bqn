@@ -78,9 +78,14 @@ WMA ⇐ {
   {(+´w×𝕩)÷+´w}˘ 𝕨↕𝕩
 }
 
-# n Std prices — rolling population standard deviation
+# n Std prices — rolling population standard deviation, O(n) via prefix-sum
 Std ⇐ {
-  {m←(+´÷≠)𝕩 ⋄ √(+´(𝕩-m)⋆2)÷≠𝕩}˘ 𝕨↕𝕩
+  s1 ← 0∾+`𝕩
+  s2 ← 0∾+`𝕩⋆2
+  n ← 𝕨
+  m ← ((n↓s1) - ((-n)↓s1)) ÷ n
+  v ← ((n↓s2) - ((-n)↓s2)) ÷ n
+  √ 0⌈ v - m⋆2
 }
 
 # n Mom prices — momentum (price difference)
