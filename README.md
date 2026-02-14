@@ -9,6 +9,11 @@ v0.3
 
 ---
 
+## Requirements
+
+- [CBQN](https://github.com/dzaima/CBQN)
+- Python 3 + `pip install yfinance` (for data fetching)
+
 ## Overview
 
 bbq is a toolkit for quantitative strategy development in BQN.
