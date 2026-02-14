@@ -593,6 +593,63 @@ wf_la ← synth_la MomStrat wf._WF ⟨6, 3, ⟨⟨1⟩⟩, 0, wf.Sharpe⟩
 ! ∨´ wf_la.oos_ret < 0
 pass +↩ 1 ⋄ •Out "  PASS  _WF no look-ahead bias"
 
+# ══ Composition ═══════════════════════════════
+
+cmp ← •Import "../engine/cmp.bqn"
+
+# ── Norm ────────────────────────────────────
+
+n ← cmp.Norm 2‿4‿6‿8‿10
+# d=¯4‿¯2‿0‿2‿4, std=√8
+(¯4‿¯2‿0‿2‿4 ÷ √8) Ae n
+
+pass +↩ 1 ⋄ •Out "  PASS  Norm"
+
+# ── ENorm ──────────────────────────────────
+
+en ← cmp.ENorm 2‿4‿6‿8‿10
+# No lookahead: bar 0 has std=0 → result 0
+0 As ⊑en
+# Each bar uses only past data, so values differ from full-array Norm
+! 5 = ≠en
+
+pass +↩ 1 ⋄ •Out "  PASS  ENorm"
+
+# ── Score ───────────────────────────────────
+
+sc ← 0.6‿0.4 cmp.Score ⟨1‿2‿3, 4‿5‿6⟩
+2.2‿3.2‿4.2 Ae sc
+
+pass +↩ 1 ⋄ •Out "  PASS  Score"
+
+# ── Thresh (cmp) ────────────────────────────
+
+1‿0‿¯1‿0‿1 Ae 0.5 cmp.Thresh 1‿0.3‿¯0.8‿0‿0.6
+
+pass +↩ 1 ⋄ •Out "  PASS  Thresh (cmp)"
+
+# ── Compose ─────────────────────────────────
+
+cpos ← ⟨0.5‿0.5, 0.3⟩ cmp.Compose ⟨1‿2‿3, 4‿5‿6⟩
+! 3 = ≠cpos
+! ∧´ cpos∊1‿0‿¯1
+
+pass +↩ 1 ⋄ •Out "  PASS  Compose"
+
+# ── Score auto-alignment ───────────────────
+
+sc2 ← 0.5‿0.5 cmp.Score ⟨1‿2‿3‿4‿5, 10‿20‿30⟩
+! 3 = ≠sc2
+
+pass +↩ 1 ⋄ •Out "  PASS  Score auto-alignment"
+
+# ── Compose single-feature ─────────────────
+
+csf ← 2‿4‿6‿8‿10
+(0.5 cmp.Thresh cmp.Norm csf) Ae ⟨1⟩‿0.5 cmp.Compose ⟨csf⟩
+
+pass +↩ 1 ⋄ •Out "  PASS  Compose single-feature"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
