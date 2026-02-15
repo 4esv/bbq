@@ -23,23 +23,25 @@ Load ⇐ {
   vol   ⇐ •ParseFloat¨ 5⊸⊑¨ rows
 }
 
+# 𝕨: 1 = strict/equity (default), 0 = futures (allows negative prices)
 Validate ⇐ {
-  ! 0<≠𝕩.close
-  n ← ≠𝕩.close
-  ! n=≠𝕩.high
-  ! n=≠𝕩.low
-  ! n=≠𝕩.open
-  ! n=≠𝕩.vol
-  ! ∧´𝕩.close>0
-  ! ∧´𝕩.high>0
-  ! ∧´𝕩.low>0
-  ! ∧´𝕩.open>0
-  ! ∧´𝕩.high≥𝕩.low
-  ! ∧´𝕩.high≥𝕩.close
-  ! ∧´𝕩.high≥𝕩.open
-  ! ∧´𝕩.low≤𝕩.close
-  ! ∧´𝕩.low≤𝕩.open
-  𝕩
+  𝕊 𝕩: 1 𝕊 𝕩;
+  s ← 𝕨 ⋄ d ← 𝕩
+  ! 0<≠d.close
+  n ← ≠d.close
+  ! n=≠d.high
+  ! n=≠d.low
+  ! n=≠d.open
+  ! n=≠d.vol
+  { s ?
+    ! ∧´d.close>0 ⋄ ! ∧´d.high>0 ⋄ ! ∧´d.low>0 ⋄ ! ∧´d.open>0
+  ; @}
+  ! ∧´d.high≥d.low
+  ! ∧´d.high≥d.close
+  ! ∧´d.high≥d.open
+  ! ∧´d.low≤d.close
+  ! ∧´d.low≤d.open
+  d
 }
 
 Align ⇐ {m←⌊´≠¨𝕩 ⋄ (-m)↑¨𝕩}

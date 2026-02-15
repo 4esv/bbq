@@ -45,9 +45,25 @@ d ← bt.Validate data
   dates⇐⟨⟩ ⋄ close⇐⟨⟩ ⋄ high⇐⟨⟩ ⋄ low⇐⟨⟩ ⋄ open⇐⟨⟩ ⋄ vol⇐⟨⟩
 }
 
-# Should fail on negative prices
+# Should fail on negative prices in strict (default) mode
 ! 1 = ({bt.Validate 𝕩 ⋄ 0}⎊{1}) {
   dates⇐⟨"a"⟩ ⋄ close⇐⟨¯1⟩ ⋄ high⇐⟨5⟩ ⋄ low⇐⟨1⟩ ⋄ open⇐⟨3⟩ ⋄ vol⇐⟨100⟩
+}
+
+# Should fail on negative prices in explicit strict mode
+! 1 = ({1 bt.Validate 𝕩 ⋄ 0}⎊{1}) {
+  dates⇐⟨"a"⟩ ⋄ close⇐⟨¯1⟩ ⋄ high⇐⟨5⟩ ⋄ low⇐⟨1⟩ ⋄ open⇐⟨3⟩ ⋄ vol⇐⟨100⟩
+}
+
+# Futures mode: should accept negative prices
+fd ← 0 bt.Validate {
+  dates⇐⟨"a"⟩ ⋄ close⇐⟨¯37.63⟩ ⋄ high⇐⟨¯30⟩ ⋄ low⇐⟨¯40⟩ ⋄ open⇐⟨¯35⟩ ⋄ vol⇐⟨100⟩
+}
+! 1 = ≠fd.close
+
+# Futures mode: should still enforce OHLC relationships
+! 1 = ({0 bt.Validate 𝕩 ⋄ 0}⎊{1}) {
+  dates⇐⟨"a"⟩ ⋄ close⇐⟨¯37⟩ ⋄ high⇐⟨¯50⟩ ⋄ low⇐⟨¯30⟩ ⋄ open⇐⟨¯35⟩ ⋄ vol⇐⟨100⟩
 }
 
 # Should fail on OHLC violation (high < low)
