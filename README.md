@@ -5,7 +5,7 @@
 [![CI](https://github.com/4esv/bbq/actions/workflows/ci.yml/badge.svg)](https://github.com/4esv/bbq/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-v0.4
+v0.5
 
 ---
 
@@ -29,14 +29,15 @@ engine/
 ├── bt.bqn      # Backtesting: simulation, PnL, metrics, portfolio, reporting
 ├── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
 ├── cmp.bqn     # Composition: normalization, scoring, thresholding
-└── opt.bqn     # Options pricing: Black-Scholes, Greeks, IV
+├── opt.bqn     # Options pricing: Black-Scholes, Greeks, IV
+└── mc.bqn      # Monte Carlo: GBM paths, pricing, payoffs, antithetic variates
 ```
 
 `core.bqn ← bt.bqn ← wf.bqn`. Each layer re-exports the one below it. Strategies import `bt.bqn`, walk-forward scripts import `wf.bqn`.
 
 `cmp.bqn` imports `bt.bqn` internally but does not re-export it. Composed strategies import both `bt` and `cmp`.
 
-`opt.bqn` imports `core.bqn` for `eps`. Leaf module — strategies import `opt.bqn` directly.
+`opt.bqn` imports `core.bqn` for `eps`. `mc.bqn` imports both `core.bqn` and `opt.bqn`.
 
 ## Quick Start
 
@@ -249,6 +250,33 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `Grid` | `Grid ranges` | Cartesian product of param ranges |
 | `_WF` | `prices Strategy _WF config` | Walk-forward orchestrator |
 | `WFReport` | `name‿tr‿te‿gs WFReport results` | Print WF summary |
+
+### Options Pricing
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `BS` | `BS S‿K‿T‿r‿σ‿type` | Black-Scholes price (1=call, ¯1=put) |
+| `Delta` | `Delta S‿K‿T‿r‿σ‿type` | Option delta |
+| `Gamma` | `Gamma S‿K‿T‿r‿σ‿type` | Option gamma |
+| `Theta` | `Theta S‿K‿T‿r‿σ‿type` | Option theta |
+| `Vega` | `Vega S‿K‿T‿r‿σ‿type` | Option vega |
+| `Rho` | `Rho S‿K‿T‿r‿σ‿type` | Option rho |
+| `IV` | `IV target‿S‿K‿T‿r‿type` | Implied volatility (Newton-Raphson) |
+| `Parity` | `Parity S‿K‿T‿r` | Put-call parity forward |
+
+### Monte Carlo
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Paths` | `Paths n‿S₀‿μ‿σ‿T‿steps` | GBM price paths [n, steps] |
+| `_Price` | `Payoff _Price paths‿r‿T` | Discounted expected payoff |
+| `_Antithetic` | `Paths _Antithetic config` | Antithetic variance reduction [2n, steps] |
+| `EuroCall` | `k EuroCall path` | European call payoff |
+| `EuroPut` | `k EuroPut path` | European put payoff |
+| `AsianCall` | `k AsianCall path` | Arithmetic average call payoff |
+| `BarrierUpOut` | `k‿barrier BarrierUpOut path` | Up-and-out barrier call payoff |
+
+Running `bqn engine/mc.bqn` prints a convergence table comparing MC vs BS analytical pricing.
 
 ### Makefile
 
