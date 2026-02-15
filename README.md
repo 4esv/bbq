@@ -256,7 +256,6 @@ make run name=X        Run a strategy
 make test              Run test suite
 make source name=X     Create data source (fetcher + parser)
 make clean             Remove data files
-make setup             Install pre-commit hook
 ```
 
 ## Benchmarks
