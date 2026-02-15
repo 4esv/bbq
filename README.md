@@ -5,7 +5,7 @@
 [![CI](https://github.com/4esv/bbq/actions/workflows/ci.yml/badge.svg)](https://github.com/4esv/bbq/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-v0.3
+v0.4
 
 ---
 
@@ -28,12 +28,15 @@ engine/
 ├── core.bqn    # Shared: data loading, indicators, signal utilities
 ├── bt.bqn      # Backtesting: simulation, PnL, metrics, portfolio, reporting
 ├── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
-└── cmp.bqn     # Composition: normalization, scoring, thresholding
+├── cmp.bqn     # Composition: normalization, scoring, thresholding
+└── opt.bqn     # Options pricing: Black-Scholes, Greeks, IV
 ```
 
 `core.bqn ← bt.bqn ← wf.bqn`. Each layer re-exports the one below it. Strategies import `bt.bqn`, walk-forward scripts import `wf.bqn`.
 
 `cmp.bqn` imports `bt.bqn` internally but does not re-export it. Composed strategies import both `bt` and `cmp`.
+
+`opt.bqn` imports `core.bqn` for `eps`. Leaf module — strategies import `opt.bqn` directly.
 
 ## Quick Start
 
