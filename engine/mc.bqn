@@ -8,7 +8,7 @@ eps ← core.eps
 # ── RNG (internal) ─────────────────────────────
 
 # Unif n → n uniform floats in (0,1)
-Unif ← {(𝕩 •rand.Range 1000000) ÷ 1000000}
+Unif ← {(𝕩 •rand.Range 1000000000) ÷ 1000000000}
 
 # Randn n → n standard normal samples (Box-Muller)
 Randn ← {
