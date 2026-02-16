@@ -48,9 +48,9 @@ _WF ⇐ {
     test_ret ← bt.Ret test_p
 
     # Grid search on train
-    # NOTE: head-take aligns pos with ret, avoiding look-ahead bias
+    # NOTE: tail-take aligns pos with ret (warmup zeros at front, not end)
     scores ← {
-      pos ← (≠train_ret)↑ 𝕩 Strat train_p
+      pos ← (-≠train_ret)↑ 𝕩 Strat train_p
       sr ← pos bt.Run train_ret
       cost ← cr bt.Cost pos
       Metric sr-cost
@@ -61,7 +61,7 @@ _WF ⇐ {
     train_metric ← best_idx⊑scores
 
     # Evaluate best params on test
-    test_pos ← (≠test_ret)↑ best_params Strat test_p
+    test_pos ← (-≠test_ret)↑ best_params Strat test_p
     test_sr ← test_pos bt.Run test_ret
     test_cost ← cr bt.Cost test_pos
     test_oos ← test_sr - test_cost
