@@ -109,7 +109,9 @@ RSI ⇐ {
   losses ← 0⌈-deltas
   ag ← 𝕨 Wilder gains
   al ← 𝕨 Wilder losses
-  100 - 100÷1+ag÷al⌈eps
+  # FIX: constant prices → both ag and al near zero → return 50 (neutral)
+  flat ← (ag<eps) ∧ al<eps
+  (50×flat) + (¬flat) × 100 - 100÷1+ag÷al⌈eps
 }
 
 # fast‿slow‿sig MACD prices → macd‿signal‿hist
