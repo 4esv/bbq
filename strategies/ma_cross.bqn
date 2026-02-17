@@ -19,7 +19,7 @@ pos ← f > s
 ret ← bt.Ret c
 pos‿ret ↩ bt.Align pos‿ret
 pos‿ret ↩ (¯1↓pos)‿(1↓ret)  # 1-bar shift: trade on next open
-strat ← pos bt.Run ret
+strat ← (pos bt.Run ret) - 0.001 bt.Cost pos
 bh ← ret
 
 "MA Cross (10/50)"‿pos bt.Report strat‿bh
