@@ -156,7 +156,8 @@ BB ⇐ {
 OBV ⇐ {
   c‿v ← 𝕩
   signs ← × -⟜» c
-  +` signs × v
+  # FIX: zero bar 0 — » fills with 0, making sign(close[0]-0) always positive
+  +` (0∾1↓signs) × v
 }
 
 # VWAP data — volume-weighted average price (monadic, takes namespace)
