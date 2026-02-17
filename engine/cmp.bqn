@@ -33,4 +33,5 @@ Thresh ⇐ {(𝕩>𝕨)-(𝕩<-𝕨)}
 # ── Composition ────────────────────────────────
 
 # weights‿level Compose features — normalize, score, threshold
+# WARNING: uses full-array Norm (lookahead). For live use, replace with ENorm¨
 Compose ⇐ {w‿l←𝕨 ⋄ l Thresh w Score Norm¨𝕩}

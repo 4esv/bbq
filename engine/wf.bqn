@@ -57,6 +57,7 @@ _WF ⇐ {
       Metric sr-cost
     }¨ grid
 
+    # NOTE: ⍒ breaks ties by first index (lowest param combo)
     best_idx ← ⊑⍒scores
     best_params ← best_idx⊑grid
     train_metric ← best_idx⊑scores
@@ -71,6 +72,7 @@ _WF ⇐ {
     fold_results ∾↩ <{params⇐best_params, train_score⇐train_metric, test_score⇐test_metric, oos_ret⇐test_oos}
   }¨ folds
 
+  # NOTE: OOS folds concatenated directly — assumes no temporal gap between folds
   oos_ret ← ∾ {𝕩.oos_ret}¨ fold_results
   oos_eq ← bt.Equity oos_ret
   summary ← {sharpe⇐bt.Sharpe oos_ret, maxdd⇐bt.MaxDD oos_ret, total_ret⇐bt.TotalRet oos_ret, calmar⇐bt.Calmar oos_ret}
