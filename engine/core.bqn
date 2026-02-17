@@ -41,6 +41,11 @@ Validate ⇐ {
   ! ∧´d.high≥d.open
   ! ∧´d.low≤d.close
   ! ∧´d.low≤d.open
+  # NOTE: NaN≠NaN in IEEE 754, Inf detected via comparison
+  ! ∧´(d.close=d.close)∧¬∞=|d.close
+  ! ∧´(d.high=d.high)∧¬∞=|d.high
+  ! ∧´(d.low=d.low)∧¬∞=|d.low
+  ! ∧´(d.open=d.open)∧¬∞=|d.open
   d
 }
 
