@@ -8,7 +8,7 @@ eps ← core.eps
 # ── RNG (internal) ─────────────────────────────
 
 # Unif n → n uniform floats in (0,1)
-Unif ← {(𝕩 •rand.Range 1000000) ÷ 1000000}
+Unif ← {(𝕩 •rand.Range 1000000000) ÷ 1000000000}
 
 # Randn n → n standard normal samples (Box-Muller)
 Randn ← {
@@ -34,6 +34,9 @@ LPad ← {((𝕨-≠𝕩)⥊' ')∾𝕩}
 
 # ── Path Generation ────────────────────────────
 
+# NOTE: Paths takes μ (real-world drift). For risk-neutral pricing, pass r as μ.
+# _Price discounts at r. These are intentionally separate parameters.
+
 # GbmZ n‿s0‿mu‿sig‿t‿steps → drift‿diff‿z‿s0 (shared GBM setup)
 GbmZ ← {
   n‿s0‿mu‿sig‿t‿steps ← 𝕩
@@ -42,6 +45,7 @@ GbmZ ← {
 }
 
 # Paths n‿S₀‿μ‿σ‿T‿steps → [n, steps] price paths (GBM)
+# μ = drift rate (use risk-free rate r for risk-neutral pricing)
 Paths ⇐ {
   drift‿diff‿z‿s0 ← GbmZ 𝕩
   s0 × ⋆ +`˘ drift + diff×z
