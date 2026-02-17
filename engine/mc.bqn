@@ -58,7 +58,8 @@ EuroPut ⇐ {0⌈𝕨-¯1⊑𝕩}
 # k AsianCall path → payoff (arithmetic average)
 AsianCall ⇐ {0⌈((+´÷≠)𝕩)-𝕨}
 
-# k‿barrier BarrierUpOut path → payoff (knocked out if any price >= barrier)
+# k‿barrier BarrierUpOut path → payoff (knocked out if any price ≥ barrier)
+# NOTE: barrier touch (price = barrier) triggers knockout
 BarrierUpOut ⇐ {k‿b←𝕨 ⋄ (∧´𝕩<b) × 0⌈(¯1⊑𝕩)-k}
 
 # ── Pricing ────────────────────────────────────
