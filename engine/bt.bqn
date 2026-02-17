@@ -96,11 +96,8 @@ AvgWin ⇐ {w←(𝕩>0)/𝕩 ⋄ (+´w)÷(≠w)⌈1}
 # Average losing return (negative number)
 AvgLoss ⇐ {l←(𝕩<0)/𝕩 ⋄ (+´l)÷(≠l)⌈1}
 
-# Expectancy (expected value per trade)
-Expectancy ⇐ {
-  wr ← WinRate 𝕩
-  (wr × AvgWin 𝕩) + (1-wr) × AvgLoss 𝕩
-}
+# Expectancy (mean return per active bar)
+Expectancy ⇐ {a←(𝕩≠0)/𝕩 ⋄ (+´a)÷(≠a)⌈1}
 
 # Trades — count position changes (takes positions)
 Trades ⇐ {+´(»𝕩)≠𝕩}
