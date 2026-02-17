@@ -49,18 +49,19 @@ DdSeries ← {
   (eq-mx)÷mx
 }
 
-# Annualized Sharpe ratio (Rf=0, sample std)
+# Annualized Sharpe ratio (Rf=0, sample std N-1)
 Sharpe ⇐ {
-  m←(+´÷≠)𝕩
-  s←√(+´(𝕩-m)⋆2)÷(≠𝕩)-1
+  n ← ≠𝕩
+  m ← (+´𝕩)÷n
+  s ← √(+´(𝕩-m)⋆2)÷(n-1)⌈1
   (√tdy) × m ÷ s⌈eps
 }
 
-# Sortino ratio (downside deviation, sample std)
+# Sortino ratio (downside deviation, population semi-variance N)
 Sortino ⇐ {
   m ← (+´÷≠)𝕩
   dd ← 0⌊𝕩
-  ds ← √(+´dd⋆2)÷(≠𝕩)-1
+  ds ← √(+´dd⋆2)÷≠𝕩
   (√tdy) × m ÷ ds⌈eps
 }
 
