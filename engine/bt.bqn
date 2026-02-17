@@ -49,14 +49,18 @@ DdSeries ← {
   (eq-mx)÷mx
 }
 
-# Annualized Sharpe ratio (Rf=0)
-Sharpe ⇐ {(√tdy) × ((+´÷≠)𝕩) ÷ (Pstd 𝕩)⌈eps}
+# Annualized Sharpe ratio (Rf=0, sample std)
+Sharpe ⇐ {
+  m←(+´÷≠)𝕩
+  s←√(+´(𝕩-m)⋆2)÷(≠𝕩)-1
+  (√tdy) × m ÷ s⌈eps
+}
 
-# Sortino ratio (downside deviation only)
+# Sortino ratio (downside deviation, sample std)
 Sortino ⇐ {
   m ← (+´÷≠)𝕩
   dd ← 0⌊𝕩
-  ds ← √(+´dd⋆2)÷≠𝕩
+  ds ← √(+´dd⋆2)÷(≠𝕩)-1
   (√tdy) × m ÷ ds⌈eps
 }
 
