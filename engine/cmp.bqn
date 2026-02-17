@@ -7,13 +7,13 @@ eps ← 1e¯10  # division guard (matches core.eps)
 # ── Normalization ──────────────────────────────
 
 # Norm arr — z-score normalize, full-array (for WF per-fold use)
-Norm ⇐ {d←𝕩-(+´÷≠)𝕩 ⋄ d÷eps+√(+´d⋆2)÷≠𝕩}
+Norm ⇐ {d←𝕩-(+´÷≠)𝕩 ⋄ d÷eps⌈√(+´d⋆2)÷≠𝕩}
 
 # ENorm arr — expanding-window z-score (no lookahead bias)
 ENorm ⇐ {
   n←1+↕≠𝕩 ⋄ cm←(+`𝕩)÷n
   sd←√0⌈((+`𝕩⋆2)÷n)-cm⋆2
-  (𝕩-cm)÷eps+sd
+  (𝕩-cm)÷eps⌈sd
 }
 
 # ── Scoring ────────────────────────────────────
