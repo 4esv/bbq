@@ -57,6 +57,7 @@ _WF ⇐ {
       Metric sr-cost
     }¨ grid
 
+    # NOTE: ⍒ breaks ties by first index (lowest param combo)
     best_idx ← ⊑⍒scores
     best_params ← best_idx⊑grid
     train_metric ← best_idx⊑scores
