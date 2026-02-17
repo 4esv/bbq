@@ -33,6 +33,12 @@ Validate ⇐ {
   ! n=≠d.low
   ! n=≠d.open
   ! n=≠d.vol
+  # NOTE: NaN≠NaN in IEEE 754, Inf detected via comparison
+  ! ∧´(d.close=d.close)∧¬∞=|d.close
+  ! ∧´(d.high=d.high)∧¬∞=|d.high
+  ! ∧´(d.low=d.low)∧¬∞=|d.low
+  ! ∧´(d.open=d.open)∧¬∞=|d.open
+  ! ∧´d.vol≥0
   { s ?
     ! ∧´d.close>0 ⋄ ! ∧´d.high>0 ⋄ ! ∧´d.low>0 ⋄ ! ∧´d.open>0
   ; @}
@@ -41,12 +47,6 @@ Validate ⇐ {
   ! ∧´d.high≥d.open
   ! ∧´d.low≤d.close
   ! ∧´d.low≤d.open
-  # NOTE: NaN≠NaN in IEEE 754, Inf detected via comparison
-  ! ∧´(d.close=d.close)∧¬∞=|d.close
-  ! ∧´(d.high=d.high)∧¬∞=|d.high
-  ! ∧´(d.low=d.low)∧¬∞=|d.low
-  ! ∧´(d.open=d.open)∧¬∞=|d.open
-  ! ∧´d.vol≥0
   d
 }
 
@@ -173,11 +173,13 @@ AD ⇐ {
 
 # ── Signal Utilities ─────────────────────────
 
-# fast Cross slow — 1 where fast crosses above slow (bar 0 always 0)
-Cross ⇐ {0∾1↓(𝕨≥𝕩) ∧ (»𝕨)<»𝕩}
+# fast Cross slow — 1 where fast crosses above slow
+# NOTE: bar 0 is always 0 — » fills with 0, so (0<0) is false
+Cross ⇐ {(𝕨≥𝕩) ∧ (»𝕨)<»𝕩}
 
-# fast CrossDown slow — 1 where fast crosses below slow (bar 0 always 0)
-CrossDown ⇐ {0∾1↓(𝕨≤𝕩) ∧ (»𝕨)>»𝕩}
+# fast CrossDown slow — 1 where fast crosses below slow
+# NOTE: bar 0 is always 0 — » fills with 0, so (0>0) is false
+CrossDown ⇐ {(𝕨≤𝕩) ∧ (»𝕨)>»𝕩}
 
 # n Mask arr — zero first n elements, same length
 Mask ⇐ {(𝕨⥊0)∾𝕨↓𝕩}
