@@ -70,7 +70,8 @@ MaxDDDur ⇐ {⌈´0{𝕩×1+𝕨}`(DdSeries 𝕩)<0}
 TotalRet ⇐ {¯1+(¯1⊑×`1+𝕩)}
 
 # Compound annual growth rate (252 days/yr)
-CAGR ⇐ {((¯1⊑×`1+𝕩)⋆tdy÷≠𝕩)-1}
+# NOTE: clamp terminal equity to eps — negative equity makes fractional exponent undefined
+CAGR ⇐ {((eps⌈¯1⊑×`1+𝕩)⋆tdy÷≠𝕩)-1}
 
 # Annualized volatility
 AnnVol ⇐ {(Pstd 𝕩)×√tdy}
