@@ -109,7 +109,9 @@ RSI ⇐ {
   losses ← 0⌈-deltas
   ag ← 𝕨 Wilder gains
   al ← 𝕨 Wilder losses
-  100 - 100÷1+ag÷al⌈eps
+  # FIX: constant prices → both ag and al near zero → return 50 (neutral)
+  flat ← (ag<eps) ∧ al<eps
+  (50×flat) + (¬flat) × 100 - 100÷1+ag÷al⌈eps
 }
 
 # fast‿slow‿sig MACD prices → macd‿signal‿hist
@@ -139,7 +141,8 @@ Stoch ⇐ {
   # NOTE: align close to window output (drop n-1 warmup bars)
   k ← 100 × (((𝕨-1)↓c)-lo) ÷ rng⌈eps
   d ← 3 MA k
-  k‿d
+  # NOTE: trim k to match d length (MA drops 2 bars)
+  ((-≠d)↑k)‿d
 }
 
 # n‿k BB prices → upper‿mid‿lower — Bollinger Bands
@@ -154,7 +157,8 @@ BB ⇐ {
 OBV ⇐ {
   c‿v ← 𝕩
   signs ← × -⟜» c
-  +` signs × v
+  # FIX: zero bar 0 — » fills with 0, making sign(close[0]-0) always positive
+  +` (0∾1↓signs) × v
 }
 
 # VWAP data — volume-weighted average price (monadic, takes namespace)

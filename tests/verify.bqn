@@ -220,8 +220,8 @@ pass +↩ 1 ⋄ •Out "  PASS  BB"
 
 obv ← bt.OBV c‿data.vol
 ! (≠c) = ≠obv
-# First bar: sign of (100-0) is positive → vol added
-! (⊑obv) = ⊑data.vol
+# First bar has no prior close, so OBV starts at 0
+0 As ⊑obv
 
 pass +↩ 1 ⋄ •Out "  PASS  OBV"
 
