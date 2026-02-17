@@ -21,7 +21,7 @@ ENorm ⇐ {
 # weights Score features — weighted sum with auto-alignment
 Score ⇐ {
   maxlen←⌈´≠¨𝕩 ⋄ f←bt.Align 𝕩
-  {maxlen>≠0⊑f ? •Show "cmp: trimming features to "∾(•Fmt ≠0⊑f)∾" bars" ; @}
+  {maxlen>≠0⊑f ? •Out "cmp: trimming features to "∾(•Fmt ≠0⊑f)∾" bars" ; @}
   𝕨+˝∘×>f
 }
 

@@ -3,15 +3,11 @@
 
 core ← •Import "core.bqn"
 
-# Re-export core (backwards compat — strategies only import bt.bqn)
-⟨Load, Validate, Align,
+# Re-export core (strategies only import bt.bqn)
+⟨eps, tdy, Split, Pstd, Wilder,
+ Load, Validate, Align,
  MA, EMA, WMA, Std, RSI, MACD, ATR, Mom, ROC, Stoch, BB, OBV, VWAP, AD, RMax, RMin,
  Cross, CrossDown, Mask, Fill, Thresh, ThreshDown, Hold⟩ ⇐ core
-
-# Internals bt needs
-eps ← core.eps
-tdy ← core.tdy
-Pstd ← core.Pstd
 
 # ── Simulation ───────────────────────────────
 

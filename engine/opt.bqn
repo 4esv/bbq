@@ -53,7 +53,7 @@ Delta ⇐ {
 Gamma ⇐ {
   s‿k‿tt‿r‿v‿ty ← 𝕩
   d1‿d2‿st ← D12 s‿k‿tt‿r‿v
-  (Npdf d1) ÷ s × eps⌈st
+  (Npdf d1) ÷ (s × eps⌈st)
 }
 
 Theta ⇐ {
