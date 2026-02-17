@@ -79,7 +79,7 @@ AnnVol ⇐ {(Pstd 𝕩)×√tdy}
 # Calmar ratio (CAGR / |MaxDD|)
 Calmar ⇐ {(CAGR 𝕩) ÷ (|MaxDD 𝕩)⌈eps}
 
-# Win rate (positive days / active days)
+# Win rate (positive returns / non-zero returns, excludes flat days)
 WinRate ⇐ {
   active ← 𝕩≠0
   (+´𝕩>0) ÷ (+´active)⌈1
