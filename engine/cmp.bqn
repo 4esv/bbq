@@ -7,7 +7,7 @@ eps ← 1e¯10  # division guard (matches core.eps)
 # ── Normalization ──────────────────────────────
 
 # Norm arr — z-score normalize, full-array (for WF per-fold use)
-Norm ⇐ {d←𝕩-(+´÷≠)𝕩 ⋄ d÷eps+√(+´d⋆2)÷≠𝕩}
+Norm ⇐ {d←𝕩-(+´÷≠)𝕩 ⋄ d÷eps⌈√(+´d⋆2)÷≠𝕩}
 
 # ENorm arr — expanding-window z-score (no lookahead bias)
 ENorm ⇐ {
