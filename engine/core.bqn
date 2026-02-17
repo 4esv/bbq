@@ -46,6 +46,7 @@ Validate ⇐ {
   ! ∧´(d.high=d.high)∧¬∞=|d.high
   ! ∧´(d.low=d.low)∧¬∞=|d.low
   ! ∧´(d.open=d.open)∧¬∞=|d.open
+  ! ∧´d.vol≥0
   d
 }
 
