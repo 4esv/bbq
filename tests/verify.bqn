@@ -453,7 +453,7 @@ pass +↩ 1 ⋄ •Out "  PASS  AvgLoss"
 # ── Expectancy ───────────────────────────────
 
 ex ← bt.Expectancy mr
-# wr×avgwin + (1-wr)×avgloss = 0.6×0.02 + 0.4×(-0.015) = 0.006
+# mean of non-zero returns: (0.02-0.01+0.03-0.02+0.01)/5 = 0.006
 0.006 As ex
 
 pass +↩ 1 ⋄ •Out "  PASS  Expectancy"

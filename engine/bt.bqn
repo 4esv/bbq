@@ -49,10 +49,15 @@ DdSeries ← {
   (eq-mx)÷mx
 }
 
-# Annualized Sharpe ratio (Rf=0)
-Sharpe ⇐ {(√tdy) × ((+´÷≠)𝕩) ÷ (Pstd 𝕩)⌈eps}
+# Annualized Sharpe ratio (Rf=0, sample std N-1)
+Sharpe ⇐ {
+  n ← ≠𝕩
+  m ← (+´𝕩)÷n
+  s ← √(+´(𝕩-m)⋆2)÷(n-1)⌈1
+  (√tdy) × m ÷ s⌈eps
+}
 
-# Sortino ratio (downside deviation only)
+# Sortino ratio (downside deviation, population semi-variance N)
 Sortino ⇐ {
   m ← (+´÷≠)𝕩
   dd ← 0⌊𝕩
@@ -79,7 +84,7 @@ AnnVol ⇐ {(Pstd 𝕩)×√tdy}
 # Calmar ratio (CAGR / |MaxDD|)
 Calmar ⇐ {(CAGR 𝕩) ÷ (|MaxDD 𝕩)⌈eps}
 
-# Win rate (positive days / active days)
+# Win rate (positive returns / non-zero returns, excludes flat days)
 WinRate ⇐ {
   active ← 𝕩≠0
   (+´𝕩>0) ÷ (+´active)⌈1
@@ -96,11 +101,8 @@ AvgWin ⇐ {w←(𝕩>0)/𝕩 ⋄ (+´w)÷(≠w)⌈1}
 # Average losing return (negative number)
 AvgLoss ⇐ {l←(𝕩<0)/𝕩 ⋄ (+´l)÷(≠l)⌈1}
 
-# Expectancy (expected value per trade)
-Expectancy ⇐ {
-  wr ← WinRate 𝕩
-  (wr × AvgWin 𝕩) + (1-wr) × AvgLoss 𝕩
-}
+# Expectancy (mean return per active bar)
+Expectancy ⇐ {a←(𝕩≠0)/𝕩 ⋄ (+´a)÷(≠a)⌈1}
 
 # Trades — count position changes (takes positions)
 Trades ⇐ {+´(»𝕩)≠𝕩}
