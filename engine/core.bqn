@@ -141,7 +141,8 @@ Stoch ⇐ {
   # NOTE: align close to window output (drop n-1 warmup bars)
   k ← 100 × (((𝕨-1)↓c)-lo) ÷ rng⌈eps
   d ← 3 MA k
-  k‿d
+  # NOTE: trim k to match d length (MA drops 2 bars)
+  ((-≠d)↑k)‿d
 }
 
 # n‿k BB prices → upper‿mid‿lower — Bollinger Bands
