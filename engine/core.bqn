@@ -167,11 +167,11 @@ AD ⇐ {
 
 # ── Signal Utilities ─────────────────────────
 
-# fast Cross slow — 1 where fast crosses above slow
-Cross ⇐ {(𝕨≥𝕩) ∧ (»𝕨)<»𝕩}
+# fast Cross slow — 1 where fast crosses above slow (bar 0 always 0)
+Cross ⇐ {0∾1↓(𝕨≥𝕩) ∧ (»𝕨)<»𝕩}
 
-# fast CrossDown slow — 1 where fast crosses below slow
-CrossDown ⇐ {(𝕨≤𝕩) ∧ (»𝕨)>»𝕩}
+# fast CrossDown slow — 1 where fast crosses below slow (bar 0 always 0)
+CrossDown ⇐ {0∾1↓(𝕨≤𝕩) ∧ (»𝕨)>»𝕩}
 
 # n Mask arr — zero first n elements, same length
 Mask ⇐ {(𝕨⥊0)∾𝕨↓𝕩}
