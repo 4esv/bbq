@@ -974,6 +974,62 @@ pass +↩ 1 ⋄ •Out "  PASS  Rho"
 
 pass +↩ 1 ⋄ •Out "  PASS  IV"
 
+# ══ Monte Carlo ═══════════════════════════════
+
+mc ← •Import "../engine/mc.bqn"
+
+# ── Paths ──────────────────────────────────
+
+paths ← mc.Paths 100‿100‿0.05‿0.2‿1‿252
+! 100 = ⊑ ≢paths                  # 100 paths
+! 252 = 1⊑ ≢paths                 # 252 steps
+! ∧´ ∧˝ paths > 0                 # GBM paths always positive
+
+pass +↩ 1 ⋄ •Out "  PASS  MC Paths"
+
+# ── _Antithetic ──────────────────────────────
+
+apaths ← mc.Paths mc._Antithetic 50‿100‿0.05‿0.2‿1‿252
+! 100 = ⊑ ≢apaths                 # 2×50 = 100 paths
+! 252 = 1⊑ ≢apaths
+! ∧´ ∧˝ apaths > 0
+
+pass +↩ 1 ⋄ •Out "  PASS  MC _Antithetic"
+
+# ── Payoffs ──────────────────────────────────
+
+# EuroCall: max(S_T - K, 0)
+! 0 = 100 mc.EuroCall 90‿95‿80     # OTM: S_T=80 < K=100
+! 10 = 100 mc.EuroCall 90‿95‿110   # ITM: 110-100 = 10
+
+# EuroPut: max(K - S_T, 0)
+! 20 = 100 mc.EuroPut 90‿95‿80     # ITM: 100-80 = 20
+! 0 = 100 mc.EuroPut 90‿95‿110     # OTM: S_T=110 > K=100
+
+# AsianCall: max(avg - K, 0)
+! 0 = 100 mc.AsianCall 90‿110‿80   # avg=93.33 < 100
+! (110 mc.AsianCall 100‿120‿130) > 0
+
+# BarrierUpOut: knocked out if any price >= barrier
+! 0 = 100‿120 mc.BarrierUpOut 90‿130‿110   # breached: 130 >= 120
+! (100‿120 mc.BarrierUpOut 90‿110‿115) > 0  # not breached, ITM
+
+pass +↩ 1 ⋄ •Out "  PASS  MC Payoffs"
+
+# ── _Price convergence ───────────────────────
+
+# MC European call should converge to BS within tolerance
+{
+  s0←100 ⋄ k←100 ⋄ r←0.05 ⋄ sig←0.2 ⋄ t←1
+  bsPrice ← opt.BS s0‿k‿t‿r‿sig‿1
+  paths ← mc.Paths 50000‿s0‿r‿sig‿t‿252
+  mcPrice ← k⊸mc.EuroCall mc._Price paths‿r‿t
+  ! 0.5 > |mcPrice - bsPrice
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  MC _Price convergence"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
