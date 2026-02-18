@@ -8,7 +8,7 @@ bt ← •Import "bt.bqn"
  Load, Validate, Align,
  MA, EMA, WMA, Std, RSI, MACD, ATR, Mom, ROC, Stoch, BB, OBV, VWAP, AD, RMax, RMin,
  Cross, CrossDown, Mask, Fill, Thresh, ThreshDown, Hold,
- _Sim, Ret, LogRet, Run, Cost, Equity,
+ _Sim, Ret, LogRet, Run, RunOHLC, Cost, Equity,
  Sharpe, Sortino, MaxDD, MaxDDDur, TotalRet, CAGR, AnnVol, Calmar,
  WinRate, ProfitFactor, AvgWin, AvgLoss, Expectancy, Trades, TimeIn, Exposure, Skew, Kurt,
  Report, PortRun, PortCost, PortEquity, PortReport,

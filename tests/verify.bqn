@@ -1360,6 +1360,104 @@ pass +↩ 1 ⋄ •Out "  PASS  TrialCorrect"
 
 pass +↩ 1 ⋄ •Out "  PASS  MinTRL"
 
+# ══ Exec ═══════════════════════════════════════
+
+exec ← •Import "../engine/exec.bqn"
+
+# ── Slippage: zero change → zero ─────────────
+
+{
+  pos ← 1‿1‿1‿1‿1
+  vol ← 1e6‿1e6‿1e6‿1e6‿1e6
+  sl ← 0.1‿0.1 exec.Slippage pos‿vol
+  ! 0 < ⊑sl         # first bar: change from 0 to 1
+  ! ∧´ 0 = 1↓sl     # no further changes
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  Slippage"
+
+# ── FillLimit: clips to cap, preserves sign ──
+
+{
+  pos ← ¯2‿¯0.5‿0‿0.5‿2
+  vol ← 1e4‿1e4‿1e4‿1e4‿1e4
+  fl ← 0.0001 exec.FillLimit pos‿vol  # cap = 1
+  ! ∧´ (|fl) ≤ 1
+  ! 0 = 2⊑fl
+  ! (0⊑fl) < 0
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  FillLimit"
+
+# ── RunOHLC: length = ≠pos - 1 ──────────────
+
+{
+  d ← GenOHLCV 20
+  pos ← (≠d.close) ⥊ 1
+  r ← pos bt.RunOHLC d
+  ! (≠r) = (≠pos)-1
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  RunOHLC"
+
+# ── StopLoss fires correctly ─────────────────
+
+{
+  open_v ← 100‿100‿100‿100‿100
+  high_v ← 101‿101‿101‿101‿101
+  low_v  ← 99‿99‿90‿99‿99
+  close_v← 100‿100‿100‿100‿100
+  vol_v  ← 1e6‿1e6‿1e6‿1e6‿1e6
+  d ← {dates⇐•Fmt¨↕5, open⇐open_v, high⇐high_v, low⇐low_v, close⇐close_v, vol⇐vol_v}
+  pos ← 0‿1‿1‿1‿1
+  r ← 0.02 exec.StopLoss pos‿d
+  # bar 1: enter long, entry_px = open[1]=100, stop=98
+  # bar 2: low[2]=90 < 98 → trigger
+  ! 1 = 2⊑r.triggered
+  ! 0 = 2⊑r.pos
+  # stop ret = (98-100)/100 = -0.02
+  (¯0.02) As 2⊑r.ret
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  StopLoss"
+
+# ── StopTake: stop wins on same-bar conflict ─
+
+{
+  open_v ← 100‿100
+  high_v ← 100‿115
+  low_v  ← 100‿85
+  close_v← 100‿100
+  vol_v  ← 1e6‿1e6
+  d ← {dates⇐•Fmt¨↕2, open⇐open_v, high⇐high_v, low⇐low_v, close⇐close_v, vol⇐vol_v}
+  pos ← 1‿1
+  r ← 0.05‿0.10 exec.StopTake pos‿d
+  # bar 0: entry at 100, stop=95, tp=110
+  # bar 1: low=85<95 (stop) and high=115>110 (tp), stop wins
+  ! 0 < 1⊑r.triggered
+  # fill at stop=95, return = (95-100)/100 = -0.05
+  (¯0.05) As 1⊑r.ret
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  StopTake"
+
+# ── Slippage → 0 for huge volume ────────────
+
+{
+  pos ← ⟨0, 1, 1, 0, 1⟩
+  vol ← (≠pos) ⥊ 1e15
+  sl ← 0.1‿0.1 exec.Slippage pos‿vol
+  ! ∧´ sl < 1e¯5
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  Slippage (huge volume)"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""

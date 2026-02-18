@@ -34,6 +34,14 @@ LogRet ⇐ {1↓ ⋆⁼ 𝕩÷»𝕩}
 # pos Run ret → strategy returns
 Run ⇐ ×
 
+# pos RunOHLC data → strategy returns using open-to-open execution
+# Assumes positions decided at end of bar i, fills at open of bar i+1
+RunOHLC ⇐ {
+  pos ← 𝕨 ⋄ d ← 𝕩
+  opret ← ((1↓d.open) - ¯1↓d.open) ÷ ¯1↓d.open
+  (¯1↓pos) × opret
+}
+
 # rate Cost pos → transaction cost array
 Cost ⇐ {𝕨 × |-⟜»𝕩}
 
