@@ -52,6 +52,33 @@ Validate ⇐ {
 
 Align ⇐ {m←⌊´≠¨𝕩 ⋄ (-m)↑¨𝕩}
 
+# LoadMany paths → list of OHLCV namespaces, tail-aligned to shortest
+LoadMany ⇐ {
+  raw ← Load¨ 𝕩
+  m ← ⌊´ {≠𝕩.close}¨ raw
+  {
+    dates ⇐ (-m)↑𝕩.dates
+    close ⇐ (-m)↑𝕩.close
+    high  ⇐ (-m)↑𝕩.high
+    low   ⇐ (-m)↑𝕩.low
+    open  ⇐ (-m)↑𝕩.open
+    vol   ⇐ (-m)↑𝕩.vol
+  }¨ raw
+}
+
+# AlignDates datasets → list of namespaces trimmed to shortest length
+AlignDates ⇐ {
+  m ← ⌊´ {≠𝕩.close}¨ 𝕩
+  {
+    dates ⇐ (-m)↑𝕩.dates
+    close ⇐ (-m)↑𝕩.close
+    high  ⇐ (-m)↑𝕩.high
+    low   ⇐ (-m)↑𝕩.low
+    open  ⇐ (-m)↑𝕩.open
+    vol   ⇐ (-m)↑𝕩.vol
+  }¨ 𝕩
+}
+
 # ── Helpers ──────────────────────────────────
 
 # Wilder smoothing (EMA with α=1/n). Used by RSI and ATR.
