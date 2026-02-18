@@ -69,7 +69,7 @@ _WF ⇐ {
     test_oos ← test_sr - test_cost
     test_metric ← Metric test_oos
 
-    fold_results ∾↩ <{params⇐best_params, train_score⇐train_metric, test_score⇐test_metric, oos_ret⇐test_oos}
+    fold_results ∾↩ <{params⇐best_params, train_score⇐train_metric, test_score⇐test_metric, oos_ret⇐test_oos, all_scores⇐scores}
   }¨ folds
 
   # NOTE: OOS folds concatenated directly — assumes no temporal gap between folds
