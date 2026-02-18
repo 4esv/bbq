@@ -1030,6 +1030,131 @@ pass +↩ 1 ⋄ •Out "  PASS  MC Payoffs"
 
 pass +↩ 1 ⋄ •Out "  PASS  MC _Price convergence"
 
+# ══ Rolling Analytics ═══════════════════════════
+
+roll ← •Import "../engine/roll.bqn"
+
+# ── RSharpe ──────────────────────────────────
+
+{
+  ret ← 0.01‿0.01‿0.01‿0.01‿0.01‿0.01‿0.01‿0.01‿0.01‿0.01
+  rs ← 5 roll.RSharpe ret
+  ! (≠rs) = ≠ret                 # same length as input
+  ! ∧´ 0 = 4↑rs                  # warmup zeros
+  ! ∧´ (4↓rs) > 0                # positive Sharpe for constant positive returns
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  RSharpe"
+
+# ── RVol ─────────────────────────────────────
+
+{
+  ret ← 0.02‿¯0.01‿0.03‿¯0.02‿0.01‿0.02‿¯0.01‿0.03‿¯0.02‿0.01
+  rv ← 5 roll.RVol ret
+  ! (≠rv) = ≠ret                 # same length as input
+  ! ∧´ 0 = 4↑rv                  # warmup zeros
+  ! ∧´ (4↓rv) > 0                # positive vol
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  RVol"
+
+# ── RMaxDD ───────────────────────────────────
+
+{
+  # All-positive returns → maxDD = 0 per window
+  rp ← 0.01‿0.02‿0.03‿0.01‿0.02
+  rdd_pos ← 3 roll.RMaxDD rp
+  ! ∧´ 0 = 2↓rdd_pos
+
+  # Declining returns → maxDD < 0
+  rn ← ¯0.02‿¯0.03‿¯0.01‿¯0.04‿¯0.02
+  rdd_neg ← 3 roll.RMaxDD rn
+  ! ∧´ 0 > 2↓rdd_neg
+
+  # Same length
+  ! (≠rdd_pos) = ≠rp
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  RMaxDD"
+
+# ── RBeta ────────────────────────────────────
+
+{
+  # Identical series → beta = 1
+  s ← 0.01‿0.02‿¯0.01‿0.03‿¯0.02‿0.01‿0.02‿¯0.01‿0.03‿0.01
+  rb ← 5‿s roll.RBeta s
+  ! (≠rb) = ≠s
+  ! ∧´ 1e¯6 > |(4↓rb)-1           # beta ≈ 1 for identical series
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  RBeta"
+
+# ── Alpha ────────────────────────────────────
+
+{
+  # strat = bench, rf=0 → alpha = 0
+  b ← 0.01‿0.02‿¯0.01‿0.03‿¯0.02‿0.01‿0.02‿¯0.01‿0.03‿0.01
+  0 As b‿0 roll.Alpha b
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  Alpha"
+
+# ── IR ───────────────────────────────────────
+
+{
+  # Identical series → IR = 0
+  b ← 0.01‿0.02‿¯0.01‿0.03‿¯0.02‿0.01‿0.02‿¯0.01‿0.03‿0.01
+  0 As b roll.IR b
+
+  # Strat consistently outperforms → IR > 0
+  s ← b + 0.005
+  ! (b roll.IR s) > 0
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  IR"
+
+# ── Drawdowns ────────────────────────────────
+
+{
+  # Two drawdown episodes: up, down, recover, down, recover
+  r ← 0.05‿0.03‿¯0.04‿¯0.06‿0.10‿0.05‿¯0.03‿¯0.01‿0.07‿0.02
+  dd ← roll.Drawdowns r
+  ! 2 = ≠dd.start                 # two episodes
+  ! 2 = ≠dd.end
+  ! 2 = ≠dd.depth
+  ! 2 = ≠dd.dur
+  ! ∧´ (>dd.depth) < 0            # depths are negative
+
+  # All positive → no episodes
+  dd0 ← roll.Drawdowns 0.01‿0.02‿0.03‿0.04‿0.05
+  ! 0 = ≠dd0.start
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  Drawdowns"
+
+# ── UpsideCapture / DownsideCapture ──────────
+
+{
+  # strat = bench → upside capture = 1, downside capture = 1
+  b ← 0.01‿0.02‿¯0.01‿0.03‿¯0.02‿0.01‿0.02‿¯0.01‿0.03‿0.01
+  1 As b roll.UpsideCapture b
+  1 As b roll.DownsideCapture b
+
+  # Strat outperforms → upside capture > 1
+  s ← b × 1.5
+  ! (b roll.UpsideCapture s) > 1
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  UpsideCapture/DownsideCapture"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
