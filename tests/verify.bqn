@@ -1030,6 +1030,130 @@ pass +↩ 1 ⋄ •Out "  PASS  MC Payoffs"
 
 pass +↩ 1 ⋄ •Out "  PASS  MC _Price convergence"
 
+# ══ Risk ═════════════════════════════════════
+
+risk ← •Import "../engine/risk.bqn"
+
+# ── VolTarget ────────────────────────────────
+
+# Result has same length as input signal
+{
+  ret ← 0.01‿0.02‿¯0.01‿0.005‿¯0.005‿0.015‿¯0.008‿0.003‿0.01‿¯0.02‿0.005‿0.008‿¯0.003‿0.012‿¯0.007‿0.001‿0.009‿¯0.004‿0.006‿0.002‿0.011‿¯0.003‿0.007‿0.002‿0.01
+  sig ← (≠ret) ⥊ 1
+  vt ← 0.20 risk.VolTarget sig‿ret
+  ! (≠vt) = ≠sig
+  # First n-1 bars are 0 (warmup, no vol estimate yet)
+  ! ∧´ 0 = 20↑vt
+  ! (20⊑vt) > 0
+  # After warmup, values are finite and positive (sig=1, target>0)
+  ! ∧´ (21↓vt) > 0
+  ! ∧´ ¬ ∞ = |vt
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  VolTarget"
+
+# ── KellyFrac: zero-mean → 0, negative-mean → negative ──
+
+{
+  ret ← ⟨0,0,0,0,0⟩
+  k ← 0.5 risk.KellyFrac ret
+  ! 0 = k
+
+  ret2 ← ¯0.01‿¯0.01‿¯0.01‿¯0.01‿¯0.01
+  k2 ← 0.5 risk.KellyFrac ret2
+  ! k2 < 0
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  KellyFrac (zero/negative)"
+
+# ── KellyFrac: clipped to [¯1,1] ────────────
+
+{
+  # Extreme positive: huge mean/var ratio → clipped to 1
+  ret ← 0.5‿0.5‿0.5‿0.5‿0.5001
+  k ← 1 risk.KellyFrac ret
+  1 As k
+
+  # Extreme negative: clipped to ¯1
+  ret2 ← ¯0.5‿¯0.5‿¯0.5‿¯0.5‿¯0.5001
+  k2 ← 1 risk.KellyFrac ret2
+  ¯1 As k2
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  KellyFrac (clipping)"
+
+# ── KellySeries: length matches input ────────
+
+{
+  ret ← 0.01‿0.02‿¯0.01‿0.005‿¯0.005‿0.015‿¯0.008‿0.003‿0.01‿¯0.02
+  sig ← (≠ret) ⥊ 1
+  ks ← 5‿0.5 risk.KellySeries sig‿ret
+  ! (≠ks) = ≠ret
+  # First n bars are zero (not enough data)
+  ! ∧´ 0 = 5↑ks
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  KellySeries"
+
+# ── MaxPos: magnitudes ≤ cap, signs preserved ─
+
+{
+  pos ← ⟨¯2,¯0.5,0,0.5,2⟩
+  capped ← 1 risk.MaxPos pos
+  ! ∧´ (|capped) ≤ 1
+  ! 0 = 2⊑capped
+  ! (0⊑capped) < 0
+  ! (3⊑capped) > 0
+  # Small positions unchanged
+  (¯0.5) As 1⊑capped
+  (0.5) As 3⊑capped
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  MaxPos"
+
+# ── CircuitBreaker: fires and persists ───────
+
+{
+  # Construct returns where bars 1-3 have cumulative < ¯0.10
+  ret ← 0.01‿¯0.05‿¯0.04‿¯0.03‿0.02‿0.01‿0.03‿¯0.01‿0.02‿0.01
+  pos ← (≠ret) ⥊ 1
+  cb ← 3‿(¯0.10) risk.CircuitBreaker pos‿ret
+  ! (≠cb) = ≠ret
+  # Should have zeros where breaker fires
+  ! ∨´ cb = 0
+  # Unaffected bars should be 1
+  ! ∨´ cb = 1
+  # First bar never fires (not enough history)
+  ! 1 = ⊑cb
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  CircuitBreaker"
+
+# ── DDControl: zeros during drawdown, resumes ─
+
+{
+  # Sharp loss then recovery
+  ret ← 0.01‿¯0.08‿¯0.03‿0.02‿0.05‿0.06‿0.04‿0.03‿0.02‿0.01
+  pos ← (≠ret) ⥊ 1
+  ddc ← ¯0.05 risk.DDControl pos‿ret
+  ! (≠ddc) = ≠ret
+  # First bar: no drawdown → active
+  ! 1 = ⊑ddc
+  # After big loss: should be zeroed
+  ! 0 = 1⊑ddc
+  # Eventually recovers (last bars should be 1 after recovery)
+  ! 1 = ¯1⊑ddc
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  DDControl"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
