@@ -5,7 +5,7 @@ core ← •Import "core.bqn"
 
 # Re-export core (strategies only import bt.bqn)
 ⟨eps, tdy, Split, Pstd, Wilder,
- Load, Validate, Align,
+ Load, Validate, Align, LoadMany, AlignDates,
  MA, EMA, WMA, Std, RSI, MACD, ATR, Mom, ROC, Stoch, BB, OBV, VWAP, AD, RMax, RMin,
  Cross, CrossDown, Mask, Fill, Thresh, ThreshDown, Hold⟩ ⇐ core
 

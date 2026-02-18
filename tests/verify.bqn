@@ -1458,6 +1458,143 @@ pass +↩ 1 ⋄ •Out "  PASS  StopTake"
 
 pass +↩ 1 ⋄ •Out "  PASS  Slippage (huge volume)"
 
+# ══ Universe ═════════════════════════════════
+
+uni ← •Import "../engine/uni.bqn"
+
+# Helper: synthetic OHLCV namespace of length n, starting at base
+MkNs ← {
+  n‿base ← 𝕩
+  prices ← base+↕n
+  {dates⇐•Fmt¨↕n, close⇐prices, high⇐prices+1, low⇐prices-1, open⇐prices+0.5, vol⇐1000⥊˜n}
+}
+
+# ── Universe shape ─────────────────────────────
+
+{
+  ns ← MkNs¨ ⟨10‿100, 10‿200, 10‿300⟩
+  u ← uni.Universe ns
+  ! 10 = u.n_bars
+  ! 3 = u.n_assets
+  ! (10‿3) ≡ ≢u.close
+  ! (10‿3) ≡ ≢u.high
+  ! (10‿3) ≡ ≢u.low
+  ! (10‿3) ≡ ≢u.open
+  ! (10‿3) ≡ ≢u.vol
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  Universe shape"
+
+# ── XRank ──────────────────────────────────────
+
+{
+  mat ← 3‿4⥊12‿3‿7‿1‿ 5‿9‿2‿8‿ 4‿11‿6‿10
+  ranked ← uni.XRank mat
+  # Each row is a valid permutation of 0..3
+  ! ∧´ {(∧𝕩)≡↕4}˘ ranked
+  # Row 0: 1 is smallest (rank 0), 3 is 2nd (rank 1), 7 is 3rd (rank 2), 12 is largest (rank 3)
+  3‿1‿2‿0 Ae 0⊏ranked
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  XRank"
+
+# ── XScore ─────────────────────────────────────
+
+{
+  mat ← 3‿3⥊1‿2‿3‿ 4‿5‿6‿ 7‿8‿9
+  scored ← uni.XScore mat
+  # Row means should be 0
+  ! ∧´ 1e¯10 > |+˝˘scored
+  # Shape preserved
+  ! (3‿3) ≡ ≢scored
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  XScore"
+
+# ── XWeight ────────────────────────────────────
+
+{
+  mat ← 3‿3⥊1‿¯2‿3‿ 4‿5‿¯6‿ 7‿8‿9
+  w ← uni.XWeight mat
+  # Abs row sums = 1
+  ! ∧´ 1e¯10 > |(+˝˘|w)-1
+  # Shape preserved
+  ! (3‿3) ≡ ≢w
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  XWeight"
+
+# ── LongOnly ──────────────────────────────────
+
+{
+  mat ← 3‿3⥊1‿¯2‿3‿ ¯4‿5‿¯6‿ 0‿0‿0
+  lo ← uni.LongOnly mat
+  # All non-negative
+  ! ∧´ ∧˝ lo≥0
+  # Positive rows sum to 1, zero row sums to 0
+  sums ← +˝˘lo
+  ! 1e¯10 > |1-0⊑sums
+  ! 1e¯10 > |1-1⊑sums
+  ! 0 = 2⊑sums
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  LongOnly"
+
+# ── TopN ───────────────────────────────────────
+
+{
+  scores ← 3‿4⥊12‿3‿7‿1‿ 5‿9‿2‿8‿ 4‿11‿6‿10
+  tn ← 1 uni.TopN scores
+  # Each row: exactly 1 positive (1/n) and 1 negative (-1/n)
+  ! ∧´ {1 = +´𝕩>0}˘ tn
+  ! ∧´ {1 = +´𝕩<0}˘ tn
+  # Row sums = 0 (long-short balanced)
+  ! ∧´ 1e¯10 > |+˝˘tn
+  # Magnitudes = 1/n = 1
+  ! ∧´ ∧˝ (tn=1)∨(tn=¯1)∨(tn=0)
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  TopN"
+
+# ── _UniRun ───────────────────────────────────
+
+{
+  ns ← MkNs¨ ⟨10‿100, 10‿200, 10‿300⟩
+  u ← uni.Universe ns
+  AlwaysLong ← {(≠𝕩)⥊1}
+  pos ← AlwaysLong uni._UniRun u
+  ! (10‿3) ≡ ≢pos
+  ! ∧´ ∧˝ pos=1
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  _UniRun"
+
+# ── AlignDates ─────────────────────────────────
+
+{
+  a ← MkNs 10‿100
+  b ← MkNs 7‿200
+  c ← MkNs 15‿300
+  aligned ← bt.AlignDates ⟨a, b, c⟩
+  ! 3 = ≠aligned
+  # All trimmed to shortest (7)
+  ! 7 = ≠(0⊑aligned).close
+  ! 7 = ≠(1⊑aligned).close
+  ! 7 = ≠(2⊑aligned).close
+  # Tail-aligned: last element of a.close should be last element of aligned[0].close
+  ! (¯1⊑a.close) = ¯1⊑(0⊑aligned).close
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  AlignDates"
+
 # ══ Summary ══════════════════════════════════
 
 •Out ""
