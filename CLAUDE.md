@@ -1,6 +1,6 @@
 # bbq — BQN Based Quant
 
-v0.6
+v1.0
 
 ## Architecture
 
@@ -11,7 +11,12 @@ engine/
 ├── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation (imports bt)
 ├── cmp.bqn     # Composition: normalization, scoring, thresholding (imports bt)
 ├── opt.bqn     # Options pricing: Black-Scholes, Greeks, IV (imports core)
-└── mc.bqn      # Monte Carlo: GBM paths, pricing, payoffs, antithetic variates (imports core, opt)
+├── mc.bqn      # Monte Carlo: GBM paths, pricing, payoffs, antithetic variates (imports core, opt)
+├── roll.bqn    # Rolling analytics: RSharpe, RVol, drawdowns, capture ratios (imports bt)
+├── risk.bqn    # Position sizing & risk controls: Kelly, vol target, circuit breaker (imports bt)
+├── ovf.bqn     # Anti-overfitting: DSR, PSR, PBO, HHI, trial correction (imports bt, opt)
+├── exec.bqn    # Execution realism: slippage, fill limits, stop/take-profit (imports bt)
+└── uni.bqn     # Universe management: alignment, cross-sectional ops, ranking (imports bt)
 ```
 
 Dependency chain: `core.bqn ← bt.bqn ← wf.bqn`
@@ -21,6 +26,8 @@ Dependency chain: `core.bqn ← bt.bqn ← wf.bqn`
 - `cmp.bqn` imports `bt.bqn` internally, does not re-export — composed strategies import both `bt` and `cmp`
 - `opt.bqn` imports `core.bqn` for `eps` — strategies import `opt.bqn` directly
 - `mc.bqn` imports `core.bqn` and `opt.bqn` — MC scripts import `mc.bqn` directly
+- `roll.bqn`, `risk.bqn`, `exec.bqn`, `uni.bqn` import `bt.bqn` directly
+- `ovf.bqn` imports `bt.bqn` and `opt.bqn` directly
 
 ## API Reference
 
@@ -32,6 +39,7 @@ Dependency chain: `core.bqn ← bt.bqn ← wf.bqn`
 | `tdy` | constant | `252` — trading days/year |
 | `Split` | `Split str` | CSV line splitter (internal, exported for bt) |
 | `Load` | `Load path` | Load yfinance CSV → `{dates, close, high, low, open, vol}` |
+| `LoadMany` | `LoadMany paths` | Load list of CSVs → list of namespaces |
 | `Validate` | `Validate data` | Assert OHLCV invariants, passthrough |
 | `Align` | `Align arrays` | Trim list of arrays to shortest (from tail) |
 | `Wilder` | `n Wilder arr` | Wilder smoothing (exported for bt) |
@@ -95,6 +103,8 @@ Re-exports all of core.bqn, plus:
 | `PortCost` | `rates PortCost positions` | Combined transaction costs |
 | `PortEquity` | `PortEquity ret` | Alias for Equity |
 | `PortReport` | `name‿cpos PortReport assets‿cret` | Per-asset + combined report |
+| `RunOHLC` | `pos RunOHLC data` | Open-to-open returns with OHLC data |
+| `AlignDates` | `AlignDates namespaces` | Align multiple namespaces to common date range |
 
 ### wf.bqn — Walk-Forward Validation
 
@@ -153,6 +163,80 @@ Imports core.bqn and opt.bqn. Leaf module — MC scripts import `mc.bqn` directl
 | `EuroPut` | `k EuroPut path` | European put payoff (terminal) |
 | `AsianCall` | `k AsianCall path` | Arithmetic average call payoff |
 | `BarrierUpOut` | `k‿barrier BarrierUpOut path` | Up-and-out barrier call payoff |
+
+### roll.bqn — Rolling Analytics
+
+Imports bt.bqn. Import directly for rolling performance analysis.
+
+| Export | Signature | Description |
+|--------|-----------|-------------|
+| `RSharpe` | `n RSharpe ret` | Rolling annualized Sharpe |
+| `RVol` | `n RVol ret` | Rolling annualized volatility |
+| `RMaxDD` | `n RMaxDD ret` | Rolling max drawdown |
+| `RBeta` | `n‿bench RBeta ret` | Rolling beta vs benchmark |
+| `Alpha` | `bench‿rf Alpha ret` | Jensen's alpha |
+| `IR` | `bench IR ret` | Information ratio |
+| `Drawdowns` | `Drawdowns ret` | Drawdown episode namespace `{start,end,depth,dur}` |
+| `UpsideCapture` | `bench UpsideCapture ret` | Upside capture ratio |
+| `DownsideCapture` | `bench DownsideCapture ret` | Downside capture ratio |
+
+### risk.bqn — Position Sizing & Risk Controls
+
+Imports bt.bqn. Import directly for position sizing and risk management.
+
+| Export | Signature | Description |
+|--------|-----------|-------------|
+| `VolTarget` | `target VolTarget sig‿ret` | Vol-scaled position sizing |
+| `KellyFrac` | `frac KellyFrac ret` | Fractional Kelly sizing (clipped to ±1) |
+| `KellySeries` | `n‿frac KellySeries sig‿ret` | Rolling Kelly position series |
+| `MaxPos` | `cap MaxPos pos` | Clip positions to ±cap |
+| `CircuitBreaker` | `n‿thresh CircuitBreaker pos‿ret` | Zero positions on n-bar cumulative loss |
+| `DDControl` | `thresh DDControl pos‿ret` | Pause on drawdown, resume on recovery |
+| `Scale` | `target Scale pos‿ret` | Alias for VolTarget |
+
+### ovf.bqn — Anti-Overfitting Metrics
+
+Imports bt.bqn and opt.bqn. Import directly for overfitting diagnostics.
+
+| Export | Signature | Description |
+|--------|-----------|-------------|
+| `DSR` | `n DSR SR‿sk‿ku‿T` | Deflated Sharpe Ratio |
+| `PSR` | `bench PSR SR‿T‿n‿sk‿ku` | Probabilistic Sharpe Ratio |
+| `MinTRL` | `n‿SR MinTRL sk‿ku` | Minimum track record length |
+| `PBO` | `PBO fold_scores` | Probability of backtest overfitting |
+| `HHI` | `HHI ret` | Herfindahl-Hirschman concentration |
+| `TrialCorrect` | `n‿alpha TrialCorrect pvals` | BH multiple-test correction → boolean array |
+
+### exec.bqn — Execution Realism
+
+Imports bt.bqn. Import directly for realistic execution simulation.
+
+| Export | Signature | Description |
+|--------|-----------|-------------|
+| `Slippage` | `impact‿decay Slippage pos‿vol` | Market impact cost array |
+| `FillLimit` | `pct FillLimit pos‿vol` | Volume-based fill cap |
+| `StopLoss` | `pct StopLoss pos‿data` | Intrabar stop-loss → `{pos,ret,triggered}` |
+| `TakeProfit` | `pct TakeProfit pos‿data` | Intrabar take-profit |
+| `StopTake` | `stop‿tp StopTake pos‿data` | Combined stop/take (stop wins on tie) |
+
+Note: `RunOHLC` re-exported from bt.bqn: `pos RunOHLC data` — open-to-open returns.
+
+### uni.bqn — Universe Management
+
+Imports bt.bqn. Import directly for multi-asset universe strategies.
+
+| Export | Signature | Description |
+|--------|-----------|-------------|
+| `Universe` | `Universe namespaces` | Stack aligned OHLCV into matrix namespace |
+| `XRank` | `XRank mat` | Cross-sectional rank per row (0=lowest) |
+| `XScore` | `XScore mat` | Cross-sectional z-score per row |
+| `XWeight` | `XWeight mat` | L1-normalize row weights |
+| `LongOnly` | `LongOnly mat` | Zero negatives, renormalize |
+| `TopN` | `n TopN scores` | Long top-N, short bottom-N, equal weight |
+| `_UniRun` | `Strategy _UniRun universe` | Apply strategy to universe matrix |
+| `UniReport` | `name UniReport universe‿pos` | Per-asset + combined report |
+
+Note: `LoadMany` added to core.bqn (`LoadMany paths`), `AlignDates` added to bt.bqn (`AlignDates namespaces`).
 
 ## BQN Landmines
 

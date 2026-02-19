@@ -1,1 +1,0 @@
-# bbq scratch pad
