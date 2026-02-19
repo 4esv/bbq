@@ -32,9 +32,9 @@ export STRATEGY_TEMPLATE
 # Usage: make new name=bollinger
 new:
 	@test -n "$(name)" || (echo "Usage: make new name=strategy_name" && exit 1)
-	@test ! -f strategies/$(name).bqn || (echo "strategies/$(name).bqn already exists" && exit 1)
-	@echo "$$STRATEGY_TEMPLATE" > strategies/$(name).bqn
-	@echo "Created strategies/$(name).bqn"
+	@test ! -f examples/$(name).bqn || (echo "examples/$(name).bqn already exists" && exit 1)
+	@echo "$$STRATEGY_TEMPLATE" > examples/$(name).bqn
+	@echo "Created examples/$(name).bqn"
 
 # Fetch market data
 # Usage: make fetch [ticker=AAPL] [period=5y]
@@ -45,7 +45,7 @@ fetch:
 # Usage: make run name=ma_cross
 run:
 	@test -n "$(name)" || (echo "Usage: make run name=strategy_name" && exit 1)
-	bqn strategies/$(name).bqn
+	bqn examples/$(name).bqn
 
 # Run test suite
 test:
