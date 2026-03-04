@@ -31,6 +31,9 @@ Scale ⇐ ×
 
 # ── Stop Loss ──────────────────────────────────
 
+# NOTE: StopLoss, TakeProfit, StopTake use explicit blocks — per-bar
+# state mutation (entry price tracking) requires sequential ¨ with ↩.
+
 # pct StopLoss pos‿data → {pos, ret, triggered}
 # Long exit if low[i] < entry_price × (1-pct); fill at stop price
 # entry_price = open of bar when entering position

@@ -96,6 +96,7 @@ DownsideCapture ⇐ {
 # ── Drawdown Episodes ────────────────────────
 
 # Drawdowns ret → {start, end, depth, dur}
+# NOTE: episode detection with state — explicit block required
 Drawdowns ⇐ {
   eq ← ×`1+𝕩
   mx ← ⌈`eq

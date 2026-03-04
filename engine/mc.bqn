@@ -30,7 +30,7 @@ Rd4 ← {
 }
 
 # LPad — left-pad string to width (right-align)
-LPad ← {((𝕨-≠𝕩)⥊' ')∾𝕩}
+LPad ← (' '⥊˜⊣-≠∘⊢) ∾ ⊢
 
 # ── Path Generation ────────────────────────────
 
@@ -54,13 +54,13 @@ Paths ⇐ {
 # ── Payoff Helpers ─────────────────────────────
 
 # k EuroCall path → payoff
-EuroCall ⇐ {0⌈(¯1⊑𝕩)-𝕨}
+EuroCall ⇐ 0⊸⌈ -˜⟜(¯1⊸⊑)
 
 # k EuroPut path → payoff
-EuroPut ⇐ {0⌈𝕨-¯1⊑𝕩}
+EuroPut ⇐ 0⊸⌈ -⟜(¯1⊸⊑)
 
 # k AsianCall path → payoff (arithmetic average)
-AsianCall ⇐ {0⌈((+´÷≠)𝕩)-𝕨}
+AsianCall ⇐ 0⊸⌈ -˜⟜(+´÷≠)
 
 # k‿barrier BarrierUpOut path → payoff (knocked out if any price ≥ barrier)
 # NOTE: barrier touch (price = barrier) triggers knockout
