@@ -28,7 +28,7 @@ Score ⇐ {
 # ── Thresholding ───────────────────────────────
 
 # level Thresh scores — position mapper: 1/0/¯1
-Thresh ⇐ {(𝕩>𝕨)-(𝕩<-𝕨)}
+Thresh ⇐ >˜ - ⊢<-∘⊣
 
 # ── Composition ────────────────────────────────
 

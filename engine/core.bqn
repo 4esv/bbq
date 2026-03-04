@@ -50,7 +50,7 @@ Validate ⇐ {
   d
 }
 
-Align ⇐ {m←⌊´≠¨𝕩 ⋄ (-m)↑¨𝕩}
+Align ⇐ (-⌊´∘(≠¨))⊸(↑¨)
 
 # LoadMany paths → list of OHLCV namespaces, tail-aligned to shortest
 LoadMany ⇐ {
@@ -90,10 +90,10 @@ Pstd ⇐ {m←(+´÷≠)𝕩 ⋄ √(+´(𝕩-m)⋆2)÷≠𝕩}
 # ── Indicators ───────────────────────────────
 
 # n RMax prices — rolling maximum
-RMax ⇐ {⌈´˘ 𝕨↕𝕩}
+RMax ⇐ ⌈´˘∘↕
 
 # n RMin prices — rolling minimum
-RMin ⇐ {⌊´˘ 𝕨↕𝕩}
+RMin ⇐ ⌊´˘∘↕
 
 # n MA prices — simple moving average, O(n) via prefix-sum
 MA ⇐ {
@@ -124,10 +124,10 @@ Std ⇐ {
 }
 
 # n Mom prices — momentum (price difference)
-Mom ⇐ {(𝕨↓𝕩) - ((-𝕨)↓𝕩)}
+Mom ⇐ ↓ - (-∘⊣)⊸↓
 
 # n ROC prices — rate of change as percentage
-ROC ⇐ {100 × ((𝕨↓𝕩) - ((-𝕨)↓𝕩)) ÷ (-𝕨)↓𝕩}
+ROC ⇐ 100⊸× Mom ÷ (-∘⊣)⊸↓
 
 # n RSI prices — relative strength index (0-100)
 RSI ⇐ {
@@ -206,25 +206,27 @@ AD ⇐ {
 
 # fast Cross slow — 1 where fast crosses above slow
 # NOTE: bar 0 is always 0 — » fills with 0, so (0<0) is false
-Cross ⇐ {(𝕨≥𝕩) ∧ (»𝕨)<»𝕩}
+Cross ⇐ ≥ ∧ <○»
 
 # fast CrossDown slow — 1 where fast crosses below slow
 # NOTE: bar 0 is always 0 — » fills with 0, so (0>0) is false
-CrossDown ⇐ {(𝕨≤𝕩) ∧ (»𝕨)>»𝕩}
+CrossDown ⇐ ≤ ∧ >○»
 
 # n Mask arr — zero first n elements, same length
-Mask ⇐ {(𝕨⥊0)∾𝕨↓𝕩}
+Mask ⇐ ⥊⟜0∘⊣ ∾ ↓
 
 # Fill signals — forward-fill: hold last non-zero
+# NOTE: scan with conditional carry — explicit block required
 Fill ⇐ {(⊑𝕩){𝕩+(𝕩=0)×𝕨}`𝕩}
 
 # level Thresh values — 1 where value crosses above level
-Thresh ⇐ {(𝕩>𝕨) ∧ (»𝕩)≤𝕨}
+Thresh ⇐ >˜ ∧ ⊣≥»∘⊢
 
 # level ThreshDown values — 1 where value crosses below level
-ThreshDown ⇐ {(𝕩<𝕨) ∧ (»𝕩)≥𝕨}
+ThreshDown ⇐ <˜ ∧ ⊣≤»∘⊢
 
 # n Hold positions — min n-bar holding period
+# NOTE: state machine with counter — explicit block required
 Hold ⇐ {
   n ← 𝕨 ⋄ pos ← 0 ⋄ count ← 0
   {

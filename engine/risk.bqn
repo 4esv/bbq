@@ -47,11 +47,12 @@ KellySeries ⇐ {
 # ── Position Limits ──────────────────────────
 
 # cap MaxPos pos → clip magnitude, preserve sign
-MaxPos ⇐ {(×𝕩) × 𝕨 ⌊ |𝕩}
+MaxPos ⇐ ×∘⊢ × ⊣⌊|∘⊢
 
 # ── Risk Controls ────────────────────────────
 
 # n‿thresh CircuitBreaker pos‿ret → zero pos for n bars after n-bar loss < thresh
+# NOTE: countdown state machine — explicit block required
 CircuitBreaker ⇐ {
   n‿thresh ← 𝕨
   pos‿ret ← 𝕩

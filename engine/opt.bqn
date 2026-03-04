@@ -7,7 +7,7 @@ eps ← core.eps
 # ── Normal Distribution ─────────────────────────
 
 # Standard normal PDF
-Npdf ⇐ {(÷√2×π) × ⋆-0.5×𝕩⋆2}
+Npdf ⇐ (÷√2×π)⊸×∘⋆∘(-0.5⊸×∘(⋆⟜2))
 
 # Standard normal CDF (Abramowitz-Stegun approximation)
 Phi ⇐ {

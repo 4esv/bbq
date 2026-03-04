@@ -26,10 +26,10 @@ _Sim ⇐ {
 # ── Backtest Core ────────────────────────────
 
 # Ret prices → simple returns (1 shorter than input)
-Ret ⇐ {(1↓𝕩-»𝕩) ÷ 1↓»𝕩}
+Ret ⇐ 1⊸↓∘-⟜» ÷ 1⊸↓∘»
 
 # LogRet prices → log returns (1 shorter than input)
-LogRet ⇐ {1↓ ⋆⁼ 𝕩÷»𝕩}
+LogRet ⇐ 1⊸↓ ⋆⁼∘÷⟜»
 
 # pos Run ret → strategy returns
 Run ⇐ ×
@@ -43,10 +43,10 @@ RunOHLC ⇐ {
 }
 
 # rate Cost pos → transaction cost array
-Cost ⇐ {𝕨 × |-⟜»𝕩}
+Cost ⇐ ×⟜(|∘-⟜»)
 
 # Equity ret → equity curve starting at 1
-Equity ⇐ {×`1+𝕩}
+Equity ⇐ ×`∘(1⊸+)
 
 # ── Metrics ──────────────────────────────────
 
@@ -74,49 +74,44 @@ Sortino ⇐ {
 }
 
 # Maximum drawdown (negative number)
-MaxDD ⇐ {⌊´ DdSeries 𝕩}
+MaxDD ⇐ ⌊´∘DdSeries
 
 # Longest drawdown duration (bars)
-MaxDDDur ⇐ {⌈´0{𝕩×1+𝕨}`(DdSeries 𝕩)<0}
+MaxDDDur ⇐ ⌈´∘(0⊸({𝕩×1+𝕨})`)∘(<⟜0)∘DdSeries
 
 # Total cumulative return
-TotalRet ⇐ {¯1+(¯1⊑×`1+𝕩)}
+TotalRet ⇐ -⟜1 ¯1⊸⊑∘Equity
 
 # Compound annual growth rate (252 days/yr)
 # NOTE: clamp terminal equity to eps — negative equity makes fractional exponent undefined
-CAGR ⇐ {((eps⌈¯1⊑×`1+𝕩)⋆tdy÷≠𝕩)-1}
+CAGR ⇐ -⟜1 eps⊸⌈∘(¯1⊸⊑)∘Equity ⋆ tdy⊸÷∘≠
 
 # Annualized volatility
-AnnVol ⇐ {(Pstd 𝕩)×√tdy}
+AnnVol ⇐ (√tdy)⊸×∘Pstd
 
 # Calmar ratio (CAGR / |MaxDD|)
-Calmar ⇐ {(CAGR 𝕩) ÷ (|MaxDD 𝕩)⌈eps}
+Calmar ⇐ CAGR ÷ eps⊸⌈∘|∘MaxDD
 
 # Win rate (positive returns / non-zero returns, excludes flat days)
-WinRate ⇐ {
-  active ← 𝕩≠0
-  (+´𝕩>0) ÷ (+´active)⌈1
-}
+WinRate ⇐ +´∘>⟜0 ÷ 1⊸⌈∘+´∘≠⟜0
 
 # Profit factor (gross profit / gross loss)
-ProfitFactor ⇐ {
-  (+´(𝕩>0)×𝕩) ÷ (|+´(𝕩<0)×𝕩)⌈eps
-}
+ProfitFactor ⇐ +´∘(>⟜0⊸×) ÷ eps⊸⌈∘|∘(+´)∘(<⟜0⊸×)
 
 # Average winning return
-AvgWin ⇐ {w←(𝕩>0)/𝕩 ⋄ (+´w)÷(≠w)⌈1}
+AvgWin ⇐ (+´÷1⊸⌈∘≠)∘(>⟜0⊸/)
 
 # Average losing return (negative number)
-AvgLoss ⇐ {l←(𝕩<0)/𝕩 ⋄ (+´l)÷(≠l)⌈1}
+AvgLoss ⇐ (+´÷1⊸⌈∘≠)∘(<⟜0⊸/)
 
 # Expectancy (mean return per active bar)
-Expectancy ⇐ {a←(𝕩≠0)/𝕩 ⋄ (+´a)÷(≠a)⌈1}
+Expectancy ⇐ (+´÷1⊸⌈∘≠)∘(≠⟜0⊸/)
 
 # Trades — count position changes (takes positions)
-Trades ⇐ {+´(»𝕩)≠𝕩}
+Trades ⇐ +´∘(»⊸≠)
 
 # Time in market (takes positions)
-TimeIn ⇐ {(+´𝕩≠0)÷≠𝕩}
+TimeIn ⇐ +´∘≠⟜0 ÷ ≠
 
 # Exposure — alias for TimeIn
 Exposure ⇐ TimeIn
@@ -190,7 +185,7 @@ Rd ⇐ {
 }
 
 # Right-pad string to width
-Pad ⇐ {(𝕨⌈≠𝕩)↑𝕩}
+Pad ⇐ (⊣⌈≠∘⊢)⊸↑
 
 # ── Reporting ────────────────────────────────
 
