@@ -42,7 +42,7 @@ Full tutorial: [mlochbaum.github.io/BQN/tutorial](https://mlochbaum.github.io/BQ
 ## Quick Start
 
 ```bash
-make fetch                     # download SPY data (5yr daily)
+curl -o data/SPY.csv "https://stooq.com/q/d/l/?s=spy.us&i=d"
 make run name=ma_cross         # run the example strategy
 ```
 
@@ -64,9 +64,9 @@ bbq works with any CSV containing `Date,Open,High,Low,Close,Volume` columns.
 
 **Yahoo Finance** — requires Python 3 + `pip install yfinance`:
 
-```bash
-make fetch                    # SPY, 5yr daily
-make fetch ticker=AAPL period=10y
+```python
+import yfinance as yf
+yf.download("SPY", period="5y").to_csv("data/SPY.csv")
 ```
 
 **Stooq** — free CSV, no API key, no Python:
@@ -87,7 +87,6 @@ Free tier: 25 requests/day. Get a key at [alphavantage.co](https://www.alphavant
 
 ```
 make new name=X        Create strategy from template
-make fetch [ticker=X]  Download market data (default: SPY, 5y)
 make run name=X        Run a strategy
 make test              Run test suite (129 tests)
 make source name=X     Create data source (fetcher + parser)

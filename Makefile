@@ -1,4 +1,4 @@
-.PHONY: new fetch run test source clean help
+.PHONY: new run test source clean help
 
 define STRATEGY_TEMPLATE
 # Strategy: $(name)
@@ -36,11 +36,6 @@ new:
 	@echo "$$STRATEGY_TEMPLATE" > examples/$(name).bqn
 	@echo "Created examples/$(name).bqn"
 
-# Fetch market data
-# Usage: make fetch [ticker=AAPL] [period=5y]
-fetch:
-	python data/fetch.py $(or $(ticker),SPY) $(or $(period),5y)
-
 # Run a strategy
 # Usage: make run name=ma_cross
 run:
@@ -69,7 +64,6 @@ help:
 	@echo "bbq — BQN Based Quant"
 	@echo ""
 	@echo "  make new name=X      Create strategy from template"
-	@echo "  make fetch [ticker=X] Download market data"
 	@echo "  make run name=X      Run a strategy"
 	@echo "  make test             Run test suite"
 	@echo "  make source name=X   Create data source (fetcher + parser)"
