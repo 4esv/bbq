@@ -1,6 +1,8 @@
 # bbq — BQN Based Quant
 
-v1.0
+v2.0
+
+Key reminders: use ← for first definition, ↩ for redefinition. Variables starting with uppercase are subjects (nouns), not functions. » fills with 0, not the first element. Evaluation is right-to-left. Test each function incrementally before composing. Let's begin.
 
 ## Architecture
 
@@ -251,6 +253,26 @@ Note: `LoadMany` added to core.bqn (`LoadMany paths`), `AlignDates` added to bt.
 - **`×⊸×` is sign×𝕩, not 𝕨×𝕩**: `⊸` applies left operand monadically to `𝕨`. Use plain `×` for dyadic multiply.
 - **Functions can't be dyadic args**: `F G x` is a train, not `G` with `𝕨=F`. Use a 1-modifier (`_Price` not `Price`) to receive functions as operands.
 - **`•MonoTime@` needs parens before arithmetic**: `•MonoTime@ - t0` parses as `•MonoTime (@ - t0)`. Write `(•MonoTime@)-t0`.
+- **Modifier binding is left-to-right**: `⌊´∘≠¨` = `(⌊´∘≠)¨`, NOT `⌊´∘(≠¨)`. Use parens: `⌊´∘(≠¨)` to apply `¨` only to `≠`. Same issue with `∘+´∘F` → need `∘(+´)∘F`.
+- **`⋆⁼` in compositions**: `F∘⋆⁼∘G` binds as `(F∘⋆)⁼∘G` (inverse of F∘⋆). Use `F∘(⋆⁼)∘G` or `F ⋆⁼∘G` (2-train/atop).
+
+## Idiomatic Style (v2.0)
+
+**Use trains/forks for pure functions:**
+```bqn
+Ret    ⇐ 1⊸↓∘-⟜» ÷ 1⊸↓∘»       # fork: numerator ÷ denominator
+Equity ⇐ ×`∘(1⊸+)                 # composition: scan after +1
+Trades ⇐ +´∘(»⊸≠)                 # composition: sum after prev≠curr
+RMax   ⇐ ⌈´˘∘↕                    # composition: max-reduce after windows
+Cross  ⇐ ≥ ∧ <○»                  # fork with ○ (both)
+MaxDD  ⇐ ⌊´∘DdSeries              # composition: min after drawdown series
+```
+
+**Keep explicit blocks for stateful functions:**
+- `_Sim`, `Hold`, `Fill` — scans with conditional carry
+- `StopLoss`, `TakeProfit`, `StopTake` — per-bar entry price tracking
+- `CircuitBreaker`, `Drawdowns` — state machines with counters
+- `Load`, `Validate`, `Report` — namespace construction / I/O
 
 ## Conventions
 
