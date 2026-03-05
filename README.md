@@ -61,7 +61,28 @@ Verdict: Has potential, needs work
 
 ## Data Sources
 
-bbq works with any CSV containing `Date,Open,High,Low,Close,Volume` columns. Bring your own data — download from [Stooq](https://stooq.com), [Yahoo Finance](https://finance.yahoo.com), [Alpha Vantage](https://www.alphavantage.co), or export from your broker.
+bbq works with any CSV containing `Date,Open,High,Low,Close,Volume` columns.
+
+**Stooq** — free CSV, no API key:
+
+```bash
+curl -o data/SPY.csv "https://stooq.com/q/d/l/?s=spy.us&i=d"
+```
+
+**Yahoo Finance** — requires Python 3 + `pip install yfinance`:
+
+```python
+import yfinance as yf
+yf.download("SPY", period="5y").to_csv("data/SPY.csv")
+```
+
+**Alpha Vantage** — free API key:
+
+```bash
+curl -o data/SPY.csv "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=full&apikey=YOUR_KEY&datatype=csv"
+```
+
+Or export from your broker.
 
 ## Makefile
 
