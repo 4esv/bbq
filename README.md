@@ -41,9 +41,10 @@ Full tutorial: [mlochbaum.github.io/BQN/tutorial](https://mlochbaum.github.io/BQ
 
 ## Quick Start
 
+Drop a CSV with `Date,Open,High,Low,Close,Volume` columns into `data/`, then:
+
 ```bash
-curl -o data/SPY.csv "https://stooq.com/q/d/l/?s=spy.us&i=d"
-make run name=ma_cross         # run the example strategy
+make run name=ma_cross
 ```
 
 Output:
@@ -60,28 +61,7 @@ Verdict: Has potential, needs work
 
 ## Data Sources
 
-bbq works with any CSV containing `Date,Open,High,Low,Close,Volume` columns.
-
-**Yahoo Finance** — requires Python 3 + `pip install yfinance`:
-
-```python
-import yfinance as yf
-yf.download("SPY", period="5y").to_csv("data/SPY.csv")
-```
-
-**Stooq** — free CSV, no API key, no Python:
-
-```bash
-curl -o data/SPY.csv "https://stooq.com/q/d/l/?s=spy.us&i=d"
-```
-
-**Alpha Vantage** — free API key, no Python:
-
-```bash
-curl -o data/SPY.csv "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=full&apikey=YOUR_KEY&datatype=csv"
-```
-
-Free tier: 25 requests/day. Get a key at [alphavantage.co](https://www.alphavantage.co/support/#api-key).
+bbq works with any CSV containing `Date,Open,High,Low,Close,Volume` columns. Bring your own data — download from [Stooq](https://stooq.com), [Yahoo Finance](https://finance.yahoo.com), [Alpha Vantage](https://www.alphavantage.co), or export from your broker.
 
 ## Makefile
 
@@ -89,7 +69,6 @@ Free tier: 25 requests/day. Get a key at [alphavantage.co](https://www.alphavant
 make new name=X        Create strategy from template
 make run name=X        Run a strategy
 make test              Run test suite (129 tests)
-make source name=X     Create data source (fetcher + parser)
 make clean             Remove data files
 ```
 
