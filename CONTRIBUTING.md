@@ -14,7 +14,7 @@ Target `main` directly. Small, focused PRs are easier to review.
 Checklist before opening:
 - `make test` passes (129 tests)
 - New exports have tests in `tests/verify.bqn`
-- `CLAUDE.md` and `AGENTS.md` updated if you added or changed any exported API
+- `CLAUDE.md` updated if you added or changed any exported API
 - Conventional commit message (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`)
 
 ## Code Standards
@@ -25,6 +25,8 @@ Follow the conventions in `CLAUDE.md`:
 - Use `←` for first definition, `↩` for reassignment
 - Division guards: `eps⌈x` (max), not `eps+x`
 - All backtesting positions must be 1-bar lagged to avoid lookahead bias
+- Prefer trains/forks for pure functions (see "Idiomatic Style" in CLAUDE.md)
+- Keep explicit blocks for stateful functions (`_Sim`, `Hold`, stops, etc.)
 
 ## New Modules
 
@@ -34,5 +36,5 @@ Follow the pattern of existing engine files. If adding a new module:
 2. Import `bt.bqn` (or `core.bqn` for leaf modules)
 3. Export with `⇐`
 4. Add tests in `tests/verify.bqn`
-5. Add an API section to both `CLAUDE.md` and `AGENTS.md`
+5. Add an API section to `CLAUDE.md`
 6. Add an example to `examples/` if the module has a natural usage pattern
