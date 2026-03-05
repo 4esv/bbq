@@ -1,8 +1,10 @@
 # Data
 data/*.csv
 
-# Working files
+# Dev tooling
 .claude/
+.planning/
+output.png
 WHITEPAPER.md
 
 # OS
