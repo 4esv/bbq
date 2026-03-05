@@ -10,11 +10,6 @@ v2.0
 
 ---
 
-## Requirements
-
-- [CBQN](https://github.com/dzaima/CBQN)
-- A [data source](#data-sources)
-
 ## Overview
 
 bbq is a quantitative finance toolkit in [BQN](https://mlochbaum.github.io/BQN/). 11 modules: indicators, backtesting, walk-forward validation, options pricing, Monte Carlo simulation, risk management, and anti-overfitting diagnostics.
@@ -39,9 +34,12 @@ Evaluation is **right-to-left**: `2×3+1` = `2×(3+1)` = `8`.
 
 Full tutorial: [mlochbaum.github.io/BQN/tutorial](https://mlochbaum.github.io/BQN/tutorial/index.html)
 
-## Quick Start
+## Requirements
 
-Install [CBQN](https://github.com/dzaima/CBQN), then:
+- [CBQN](https://github.com/dzaima/CBQN)
+- A [data source](#data-sources)
+
+## Quick Start
 
 ```bash
 make fetch                     # download SPY data (5yr daily)
