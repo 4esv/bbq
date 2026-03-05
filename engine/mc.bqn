@@ -77,6 +77,7 @@ _Price ⇐ {
 # ── Variance Reduction ─────────────────────────
 
 # Paths _Antithetic config → [2n, steps] (antithetic variates)
+# NOTE: 𝔽 referenced to make this a 1-modifier (operand unused)
 _Antithetic ⇐ {𝔽
   drift‿diff‿z‿s0 ← GbmZ 𝕩
   dz ← diff×z

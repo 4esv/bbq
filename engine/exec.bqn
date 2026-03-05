@@ -24,11 +24,6 @@ FillLimit ⇐ {
   (×pos) × cap ⌊ |pos
 }
 
-# ── Scale ──────────────────────────────────────
-
-# arr Scale pos → arr × pos
-Scale ⇐ ×
-
 # ── Stop Loss ──────────────────────────────────
 
 # NOTE: StopLoss, TakeProfit, StopTake use explicit blocks — per-bar

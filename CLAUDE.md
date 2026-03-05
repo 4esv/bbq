@@ -194,7 +194,7 @@ Imports bt.bqn. Import directly for position sizing and risk management.
 | `MaxPos` | `cap MaxPos pos` | Clip positions to ±cap |
 | `CircuitBreaker` | `n‿thresh CircuitBreaker pos‿ret` | Zero positions on n-bar cumulative loss |
 | `DDControl` | `thresh DDControl pos‿ret` | Pause on drawdown, resume on recovery |
-| `Scale` | `target Scale pos‿ret` | Alias for VolTarget |
+| `Scale` | `arr Scale pos` | Element-wise multiply (position scaling) |
 
 ### ovf.bqn — Anti-Overfitting Metrics
 
