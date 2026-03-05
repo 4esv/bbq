@@ -134,9 +134,7 @@ Drawdowns ⇐ {
   { 0=≠episodes ?
     {start⇐⟨⟩, end⇐⟨⟩, depth⇐⟨⟩, dur⇐⟨⟩}
   ;
-    start ⇐ {⊑𝕩}¨ episodes
-    end   ⇐ {1⊑𝕩}¨ episodes
-    depth ⇐ {2⊑𝕩}¨ episodes
-    dur   ⇐ {3⊑𝕩}¨ episodes
+    mat ← >episodes
+    start ⇐ 0⊑˘mat ⋄ end ⇐ 1⊑˘mat ⋄ depth ⇐ 2⊑˘mat ⋄ dur ⇐ 3⊑˘mat
   }
 }

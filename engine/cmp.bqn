@@ -2,7 +2,7 @@
 # engine/cmp.bqn — composable signal layer
 
 bt ← •Import "bt.bqn"
-eps ← 1e¯10  # division guard (matches core.eps)
+eps ← bt.eps
 
 # ── Normalization ──────────────────────────────
 

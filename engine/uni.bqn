@@ -3,7 +3,7 @@
 
 bt ← •Import "bt.bqn"
 
-eps ← 1e¯10
+eps ← bt.eps
 
 # ── Universe Construction ─────────────────────
 

@@ -52,20 +52,6 @@ Validate ⇐ {
 
 Align ⇐ (-⌊´∘(≠¨))⊸(↑¨)
 
-# LoadMany paths → list of OHLCV namespaces, tail-aligned to shortest
-LoadMany ⇐ {
-  raw ← Load¨ 𝕩
-  m ← ⌊´ {≠𝕩.close}¨ raw
-  {
-    dates ⇐ (-m)↑𝕩.dates
-    close ⇐ (-m)↑𝕩.close
-    high  ⇐ (-m)↑𝕩.high
-    low   ⇐ (-m)↑𝕩.low
-    open  ⇐ (-m)↑𝕩.open
-    vol   ⇐ (-m)↑𝕩.vol
-  }¨ raw
-}
-
 # AlignDates datasets → list of namespaces trimmed to shortest length
 AlignDates ⇐ {
   m ← ⌊´ {≠𝕩.close}¨ 𝕩
@@ -78,6 +64,9 @@ AlignDates ⇐ {
     vol   ⇐ (-m)↑𝕩.vol
   }¨ 𝕩
 }
+
+# LoadMany paths → load CSVs, tail-align to shortest
+LoadMany ⇐ AlignDates∘(Load¨)
 
 # ── Helpers ──────────────────────────────────
 
@@ -185,7 +174,7 @@ OBV ⇐ {
   c‿v ← 𝕩
   signs ← × -⟜» c
   # FIX: zero bar 0 — » fills with 0, making sign(close[0]-0) always positive
-  +` (0∾1↓signs) × v
+  +` (0⌾⊑ signs) × v
 }
 
 # VWAP data — volume-weighted average price (monadic, takes namespace)

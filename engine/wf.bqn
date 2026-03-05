@@ -5,7 +5,7 @@ bt ← •Import "bt.bqn"
 
 # Re-export bt (which includes core)
 ⟨eps, tdy, Split, Pstd, Wilder,
- Load, Validate, Align,
+ Load, Validate, Align, LoadMany, AlignDates,
  MA, EMA, WMA, Std, RSI, MACD, ATR, Mom, ROC, Stoch, BB, OBV, VWAP, AD, RMax, RMin,
  Cross, CrossDown, Mask, Fill, Thresh, ThreshDown, Hold,
  _Sim, Ret, LogRet, Run, RunOHLC, Cost, Equity,

@@ -136,13 +136,13 @@ Kurt ⇐ {
 # assets: list of pos‿ret pairs, weights: per-asset allocation (must sum to 1)
 PortRun ⇐ {
   ! 1e¯6 > |1-+´𝕨
-  strats ← {p‿r ← 𝕩 ⋄ p×r}¨ 𝕩
+  strats ← (×´)¨ 𝕩
   +´ 𝕨 × strats
 }
 
 # rates PortCost positions — combined transaction costs
 # positions: list of pos arrays, rates: per-asset cost rate
-PortCost ⇐ {+´ 𝕨 {𝕨 × |-⟜»𝕩}¨ 𝕩}
+PortCost ⇐ {+´ 𝕨 Cost¨ 𝕩}
 
 # PortEquity — alias for Equity (clarity for portfolio context)
 PortEquity ⇐ Equity

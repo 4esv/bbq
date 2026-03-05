@@ -88,10 +88,7 @@ TrialCorrect ⇐ {
   pass ← sorted ≤ crit
   passing ← /pass
   { 0=≠passing ? 0¨pvals ;
-    last_k ← ¯1⊑passing
-    reject_idx ← (1+last_k)↑order
-    mask ← 0¨pvals
-    { mask ↩ 1⌾(𝕩⊸⊑) mask }¨ reject_idx
-    mask
+    reject_idx ← (1+(¯1⊑passing))↑order
+    (↕≠pvals) ∊ reject_idx
   }
 }
