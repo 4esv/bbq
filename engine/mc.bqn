@@ -20,6 +20,12 @@ Randn ← {
   𝕩↑(r×•math.Cos a)∾r×•math.Sin a
 }
 
+# nu RandChi2 n → n chi-squared(nu) samples
+RandChi2 ← {+˝ (𝕨‿𝕩 ⥊ Randn 𝕨×𝕩) ⋆ 2}
+
+# nu RandT n → n Student's t samples
+RandT ⇐ {(Randn 𝕩) ÷ √(𝕨 RandChi2 𝕩)÷𝕨}
+
 # ── Formatting (internal) ──────────────────────
 
 # Rd4 — round to 4 decimal places
@@ -49,6 +55,16 @@ GbmZ ← {
 Paths ⇐ {
   drift‿diff‿z‿s0 ← GbmZ 𝕩
   s0 × ⋆ +`˘ drift + diff×z
+}
+
+# TPaths n‿S₀‿μ‿σ‿T‿steps‿nu → [n, steps] fat-tailed GBM paths
+TPaths ⇐ {
+  n‿s0‿mu‿sig‿t‿steps‿nu ← 𝕩
+  dt ← t÷steps
+  sv ← sig × √(nu-2)÷nu                    # variance-matched σ
+  drift ← (mu - 0.5×sv⋆2) × dt
+  z ← n‿steps ⥊ nu RandT n×steps
+  s0 × ⋆ +`˘ drift + (sv×√dt)×z
 }
 
 # ── Payoff Helpers ─────────────────────────────
