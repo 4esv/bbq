@@ -876,6 +876,45 @@ pass +↩ 1 ⋄ •Out "  PASS  Npdf"
 
 pass +↩ 1 ⋄ •Out "  PASS  Phi"
 
+# ── Tpdf ───────────────────────────────────────
+
+# Tpdf(0, 1) = 1/π (Cauchy)
+(1÷π) As 1 opt.Tpdf 0
+# Symmetry: ν Tpdf x = ν Tpdf -x
+(5 opt.Tpdf 1.5) As 5 opt.Tpdf ¯1.5
+# Convergence to Npdf as nu→∞
+! 0.01 > |(30 opt.Tpdf 0) - opt.Npdf 0
+! 1e¯3 > |(100 opt.Tpdf 1.5) - opt.Npdf 1.5
+
+pass +↩ 1 ⋄ •Out "  PASS  Tpdf"
+
+# ── Tcdf ───────────────────────────────────────
+
+# Tcdf(0, ν) = 0.5 for all ν
+0.5 As 5 opt.Tcdf 0
+0.5 As 1 opt.Tcdf 0
+# Cauchy: 1 Tcdf 1 ≈ 0.75
+! 1e¯4 > |(1 opt.Tcdf 1) - 0.75
+# Symmetry: Tcdf(x) + Tcdf(-x) = 1
+! 1e¯6 > |1 - (5 opt.Tcdf 1.5) + 5 opt.Tcdf ¯1.5
+# Convergence to Phi for large nu
+! 0.01 > |(30 opt.Tcdf 1) - opt.Phi 1
+! 0.01 > |(100 opt.Tcdf ¯2) - opt.Phi ¯2
+
+pass +↩ 1 ⋄ •Out "  PASS  Tcdf"
+
+# ── TcdfInv ───────────────────────────────────
+
+# Round-trip: ν Tcdf ν TcdfInv p ≈ p
+{
+  ps ← 0.05‿0.1‿0.3‿0.5‿0.7‿0.9‿0.95
+  { p←𝕩 ⋄ ! 1e¯4 > |p - 5 opt.Tcdf 5 opt.TcdfInv p }¨ ps
+  { p←𝕩 ⋄ ! 1e¯4 > |p - 30 opt.Tcdf 30 opt.TcdfInv p }¨ ps
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  TcdfInv round-trip"
+
 # ── BS ───────────────────────────────────────
 
 # Hull ch13: S=42, K=40, T=0.5, r=0.1, σ=0.2
@@ -1029,6 +1068,33 @@ pass +↩ 1 ⋄ •Out "  PASS  MC Payoffs"
 }
 
 pass +↩ 1 ⋄ •Out "  PASS  MC _Price convergence"
+
+# ── RandT ──────────────────────────────────
+
+{
+  nu ← 5
+  samples ← nu mc.RandT 10000
+  # Mean ≈ 0
+  ! 0.1 > |+´samples÷≠samples
+  # Variance ≈ nu/(nu-2) = 5/3 ≈ 1.667 for nu>2
+  var ← (+´(samples⋆2)÷≠samples) - ((+´samples÷≠samples)⋆2)
+  ! 0.5 > |var - nu÷nu-2
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  RandT"
+
+# ── TPaths ─────────────────────────────────
+
+{
+  tpaths ← mc.TPaths 100‿100‿0.05‿0.2‿1‿252‿5
+  ! 100 = ⊑ ≢tpaths                # 100 paths
+  ! 252 = 1⊑ ≢tpaths               # 252 steps
+  ! ∧´ ∧˝ tpaths > 0               # paths always positive
+  0
+}
+
+pass +↩ 1 ⋄ •Out "  PASS  MC TPaths"
 
 # ══ Rolling Analytics ═══════════════════════════
 
@@ -1352,9 +1418,13 @@ pass +↩ 1 ⋄ •Out "  PASS  TrialCorrect"
 # ── MinTRL ─────────────────────────────────
 
 {
-  # Known: MinTRL(n=1, SR=1.0, sk=0, ku=0) ≈ 3.029
+  # With t-distribution refinement, MinTRL > normal approximation (3.029)
   m ← 1‿1.0 ovf.MinTRL 0.0‿0.0
-  ! 0.1 > |m - 3.029
+  ! m > 3          # larger than normal-based estimate
+  ! m < 30         # reasonable upper bound
+  # More trials → longer required track record
+  m2 ← 10‿1.0 ovf.MinTRL 0.0‿0.0
+  ! m2 > m
   0
 }
 

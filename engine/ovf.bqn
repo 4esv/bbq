@@ -22,14 +22,15 @@ SRSigma ← {
 DSR ⇐ {
   n ← 𝕨
   sr‿sk‿ku‿t ← 𝕩
+  df ← 1⌈t-1
   eu ← 0.5772156649
   sr_star ← {n≤1 ? 0 ;
-    a ← (1-eu) × opt.PhiInv 1 - 1÷n
-    b ← eu × opt.PhiInv 1 - 1÷n × ⋆1
+    a ← (1-eu) × df opt.TcdfInv 1 - 1÷n
+    b ← eu × df opt.TcdfInv 1 - 1÷n × ⋆1
     (a+b) × √1÷1⌈t-1
   }
   sig ← SRSigma sr‿sk‿ku‿t
-  opt.Phi (sr - sr_star) ÷ eps⌈sig
+  df opt.Tcdf (sr - sr_star) ÷ eps⌈sig
 }
 
 # ── PSR (Probabilistic Sharpe Ratio) ─────────
@@ -39,7 +40,7 @@ PSR ⇐ {
   sr_bench ← 𝕨
   sr‿t‿n‿sk‿ku ← 𝕩
   sig ← SRSigma sr‿sk‿ku‿t
-  opt.Phi (sr - sr_bench) ÷ eps⌈sig
+  (1⌈t-1) opt.Tcdf (sr - sr_bench) ÷ eps⌈sig
 }
 
 # ── MinTRL (Minimum Track Record Length) ─────
@@ -48,8 +49,11 @@ PSR ⇐ {
 MinTRL ⇐ {
   n‿sr ← 𝕨
   sk‿ku ← 𝕩
-  z ← opt.PhiInv 1 - 0.05÷n
-  1 + ((1 - sk×sr) + ((ku-1)÷4)×sr⋆2) × (z÷eps⌈sr)⋆2
+  v ← (1 - sk×sr) + ((ku-1)÷4)×sr⋆2
+  # Initial guess from normal, then refine with t-distribution
+  t0 ← 1 + v × ((opt.PhiInv 1 - 0.05÷n) ÷ eps⌈sr)⋆2
+  z ← (1⌈t0-1) opt.TcdfInv 1 - 0.05÷n
+  1 + v × (z÷eps⌈sr)⋆2
 }
 
 # ── PBO (Probability of Backtest Overfitting) ─

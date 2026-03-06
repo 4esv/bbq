@@ -33,6 +33,56 @@ PhiInv ⇐ {
   Refine⍟5 x0
 }
 
+# ── Student's t Distribution ──────────────────────
+
+# Log Gamma via Lanczos approximation (g=7)
+LnGamma ← {
+  t ← 𝕩 + 6.5
+  s ← 0.99999999999980993 + +´ ⟨676.5203681218851, ¯1259.1392167224028, 771.32342877765313, ¯176.61502916214059, 12.507343278686905, ¯0.13857109526572012, 9.9843695780195716e¯6, 1.5056327351493116e¯7⟩ ÷ 𝕩+↕8
+  (0.5 × ⋆⁼ 2×π) + (⋆⁼ s) + ((𝕩-0.5) × ⋆⁼ t) - t
+}
+
+# nu Tpdf x → Student's t PDF
+Tpdf ⇐ {
+  nu ← 𝕨
+  lc ← ((LnGamma (nu+1)÷2) - LnGamma nu÷2) - 0.5 × ⋆⁼ nu×π
+  ⋆ lc + (-(nu+1)÷2) × ⋆⁼ 1 + (𝕩⋆2)÷nu
+}
+
+# Regularized incomplete beta I_x(a,b) via continued fraction
+BetaI ← {
+  x0‿a0‿b0 ← 𝕩
+  swap ← x0 > (a0+1) ÷ a0+b0+2
+  x‿a‿b ← {swap ? (1-x0)‿b0‿a0 ; x0‿a0‿b0}
+  lnB ← (LnGamma a) + (LnGamma b) - LnGamma a+b
+  lnF ← ((a × ⋆⁼ eps⌈x) + (b × ⋆⁼ eps⌈1-x)) - lnB + ⋆⁼ a
+  # CF coefficients (200 terms)
+  js ← 1+↕200 ⋄ odd ← 2|js
+  mo ← (js-1)÷2 ⋄ me ← js÷2
+  do ← (-(a+mo) × (a+b+mo) × x) ÷ (a+2×mo) × a+1+2×mo
+  de ← (me × (b-me) × x) ÷ (a+(2×me)-1) × a+2×me
+  ds ← (odd×do) + (¬odd) × de
+  h ← 1.0
+  {h ↩ 1 + 𝕩 ÷ {1e¯30>|𝕩 ? 1e¯30 ; 𝕩} h}¨ ⌽ds
+  val ← (⋆lnF) ÷ h
+  {swap ? 1-val ; val}
+}
+
+# nu Tcdf x → Student's t CDF
+Tcdf ⇐ {
+  t ← 𝕨 ÷ 𝕨 + 𝕩⋆2
+  0.5 + (×𝕩) × 0.5 × 1 - BetaI t‿(𝕨÷2)‿0.5
+}
+
+# nu TcdfInv p → inverse Student's t CDF (Newton-Raphson)
+TcdfInv ⇐ {
+  nu ← 𝕨
+  p ← 0.0001⌈0.9999⌊𝕩
+  x0 ← (PhiInv p) × {nu>4 ? √nu÷nu-2 ; 1}
+  Refine ← {𝕩 - ((nu⊸Tcdf 𝕩) - p) ÷ eps⌈nu⊸Tpdf 𝕩}
+  Refine⍟10 x0
+}
+
 # ── Helpers ──────────────────────────────────────
 
 # d1, d2, σ√T (internal)
