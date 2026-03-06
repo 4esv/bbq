@@ -12,39 +12,39 @@ v2.0
 
 ## Overview
 
-bbq is a quantitative finance toolkit in BQN. 11 modules: indicators, backtesting, walk-forward validation, options pricing, Monte Carlo simulation, risk management, and anti-overfitting diagnostics.
+bbq is a quantitative finance toolkit in [BQN](https://mlochbaum.github.io/BQN/). 11 modules: indicators, backtesting, walk-forward validation, options pricing, Monte Carlo simulation, risk management, and anti-overfitting diagnostics.
+
+## BQN 101
+
+Micro syntax primer so you can read bbq code:
+
+```
+x ← 5                    # define
+x ↩ 6                    # reassign
+3‿1‿4                    # array (flat)
+⟨3, 1‿4⟩                 # nested array
+F ← {𝕩+1}               # function (𝕩 = right arg, 𝕨 = left arg)
++´ 1‿2‿3                 # fold: 6
+F¨ 1‿2‿3                 # each: apply F to every element
+F˘ mat                   # row-wise: apply F to each row
+(F G H) x               # train: (F x) G (H x)
+```
+
+Evaluation is **right-to-left**: `2×3+1` = `2×(3+1)` = `8`.
+
+Full tutorial: [mlochbaum.github.io/BQN/tutorial](https://mlochbaum.github.io/BQN/tutorial/index.html)
 
 ## Requirements
 
 - [CBQN](https://github.com/dzaima/CBQN)
-- Python 3 + `pip install yfinance` (for data fetching)
-
-## Architecture
-
-```
-engine/
-├── core.bqn    # Shared: data loading, indicators, signal utilities
-├── bt.bqn      # Backtesting: simulation, PnL, metrics, portfolio, reporting
-├── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
-├── cmp.bqn     # Composition: normalization, scoring, thresholding
-├── opt.bqn     # Options pricing: Black-Scholes, Greeks, IV
-├── mc.bqn      # Monte Carlo: GBM paths, pricing, payoffs, antithetic variates
-├── roll.bqn    # Rolling analytics: RSharpe, RVol, drawdowns, capture ratios
-├── risk.bqn    # Position sizing & risk controls: Kelly, vol target, circuit breaker
-├── ovf.bqn     # Anti-overfitting: DSR, PSR, PBO, HHI, trial correction
-├── exec.bqn    # Execution realism: slippage, fill limits, stop/take-profit
-└── uni.bqn     # Universe management: cross-sectional ops, ranking, multi-asset
-```
-
-Dependency chain: `core.bqn ← bt.bqn ← wf.bqn`. Each layer re-exports the one below it. Strategies import `bt.bqn`, walk-forward scripts import `wf.bqn`.
-
-Leaf modules (`opt.bqn`, `mc.bqn`, `roll.bqn`, `risk.bqn`, `ovf.bqn`, `exec.bqn`, `uni.bqn`) import `bt.bqn` or `core.bqn` directly.
+- A [data source](#data-sources)
 
 ## Quick Start
 
+Drop a CSV with `Date,Open,High,Low,Close,Volume` columns into `data/`, then:
+
 ```bash
-make fetch                     # download SPY data (5yr daily)
-make run name=ma_cross         # run the example strategy
+make run name=ma_cross
 ```
 
 Output:
@@ -57,6 +57,40 @@ Sharpe:         0.66        (B&H: 0.76)
 ...
 ───
 Verdict: Has potential, needs work
+```
+
+## Data Sources
+
+bbq works with any CSV containing `Date,Open,High,Low,Close,Volume` columns.
+
+**Stooq** — free CSV, no API key:
+
+```bash
+curl -o data/SPY.csv "https://stooq.com/q/d/l/?s=spy.us&i=d"
+```
+
+**Yahoo Finance** — requires Python 3 + `pip install yfinance`:
+
+```python
+import yfinance as yf
+yf.download("SPY", period="5y").to_csv("data/SPY.csv")
+```
+
+**Alpha Vantage** — free API key:
+
+```bash
+curl -o data/SPY.csv "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=full&apikey=YOUR_KEY&datatype=csv"
+```
+
+Or export from your broker.
+
+## Makefile
+
+```
+make new name=X        Create strategy from template
+make run name=X        Run a strategy
+make test              Run test suite (129 tests)
+make clean             Remove data files
 ```
 
 ## Usage
@@ -349,6 +383,16 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `_UniRun` | `Strategy _UniRun universe` | Apply strategy per asset |
 | `UniReport` | `name UniReport weights‿uni` | Per-asset + combined report |
 
+## Why BQN
+
+- **Dense, array-oriented** — natural fit for time series and matrix operations
+- **Concise** — entire indicator suite in ~25 lines vs 160+ in Python ([benchmarks](#benchmarks))
+- **Stable spec** — no breaking changes
+- **Fast** — CBQN compiles to native, competitive with numpy at scale
+- **Readable once learned** — trains and combinators compose cleanly
+
+More at [mlochbaum.github.io/BQN](https://mlochbaum.github.io/BQN/).
+
 ## Benchmarks
 
 CBQN vs Python (pandas/numpy) vs Julia on synthetic GBM data. Median of 10 runs, 3 warmup.
@@ -398,16 +442,26 @@ CBQN vs Python (pandas/numpy) vs Julia on synthetic GBM data. Median of 10 runs,
 
 Benchmark source on the `bench` branch.
 
-## Makefile
+## Architecture
 
 ```
-make new name=X        Create strategy from template
-make fetch [ticker=X]  Download market data (default: SPY, 5y)
-make run name=X        Run a strategy
-make test              Run test suite (129 tests)
-make source name=X     Create data source (fetcher + parser)
-make clean             Remove data files
+engine/
+├── core.bqn    # Shared: data loading, indicators, signal utilities
+├── bt.bqn      # Backtesting: simulation, PnL, metrics, portfolio, reporting
+├── wf.bqn      # Walk-forward: windowing, grid search, OOS aggregation
+├── cmp.bqn     # Composition: normalization, scoring, thresholding
+├── opt.bqn     # Options pricing: Black-Scholes, Greeks, IV
+├── mc.bqn      # Monte Carlo: GBM paths, pricing, payoffs, antithetic variates
+├── roll.bqn    # Rolling analytics: RSharpe, RVol, drawdowns, capture ratios
+├── risk.bqn    # Position sizing & risk controls: Kelly, vol target, circuit breaker
+├── ovf.bqn     # Anti-overfitting: DSR, PSR, PBO, HHI, trial correction
+├── exec.bqn    # Execution realism: slippage, fill limits, stop/take-profit
+└── uni.bqn     # Universe management: cross-sectional ops, ranking, multi-asset
 ```
+
+Dependency chain: `core.bqn ← bt.bqn ← wf.bqn`. Each layer re-exports the one below it. Strategies import `bt.bqn`, walk-forward scripts import `wf.bqn`.
+
+Leaf modules (`opt.bqn`, `mc.bqn`, `roll.bqn`, `risk.bqn`, `ovf.bqn`, `exec.bqn`, `uni.bqn`) import `bt.bqn` or `core.bqn` directly.
 
 ## Design
 
@@ -418,6 +472,11 @@ The architecture has two phases: indicators (pure array ops, SIMD-friendly) and 
 `_Sim` exists for strategies that need bar-by-bar state (trailing stops, regime filters, Kalman filters). It generates position arrays that feed into the same `Run` pipeline.
 
 Walk-forward validation splits history into rolling train/test windows, optimizes parameters on train, evaluates on test, and stitches out-of-sample segments. The OOS equity curve is the real result.
+
+## Acknowledgements
+
+- [Marshall Lochbaum](https://mlochbaum.github.io/BQN/) — BQN language (ISC license)
+- [dzaima](https://github.com/dzaima/CBQN) — CBQN implementation (LGPLv3 / GPLv3 / MPL 2.0)
 
 ## License
 
