@@ -80,12 +80,18 @@ regime filters) and emits a position array that feeds the same `Run` pipeline.
 
 ## Performance
 
-The indicator and rolling layers should be **O(n)**, not O(n·window):
+The indicator and rolling layers are **O(n)**, not O(n·window). Rolling sums,
+means, and variances use prefix sums instead of recomputing each window from
+scratch:
 
-- Rolling sums/means/variances use **prefix sums** (`cs ← 0∾+`x`, then window
-  sum `= (n↓cs) - (-n)↓cs`). See `MA`/`Std` in `core.bqn` and `RSharpe`/`RVol`/
-  `RBeta` in `roll.bqn`, `VolTarget` in `risk.bqn`. Sample variance is
-  `(Σx² - (Σx)²/n)/(n-1)`; clamp with `√0⌈…` to absorb cancellation noise.
+```bqn
+cs   ← 0∾+`x                 # prefix sum, computed once
+wsum ← (n↓cs) - (-n)↓cs      # every length-n window sum, in one shot
+```
+
+- Sample variance is `(Σx² - (Σx)²/n)/(n-1)`; clamp with `√0⌈…` to absorb
+  cancellation noise. See `MA`/`Std` in `core.bqn`, `RSharpe`/`RVol`/`RBeta`
+  in `roll.bqn`, and `VolTarget` in `risk.bqn`.
 - Genuinely path-dependent windows (`RMaxDD`, `RMax`/`RMin`) stay windowed —
   there is no clean prefix-sum form.
 - Hoist loop-invariant computations out of `˘`/`¨` bodies.

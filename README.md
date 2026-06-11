@@ -266,6 +266,20 @@ All dyadic: `n Indicator prices` unless noted. Output is shorter than input by t
 | `ThreshDown` | `level ThreshDown values` | 1 where value crosses below level |
 | `Hold` | `n Hold positions` | Min n-bar holding period |
 
+### Composition
+
+Signal-fusion layer (`cmp.bqn`). Normalize features, blend into a score, map to
+positions. Note `cmp.Thresh` differs from the `Thresh` above: it maps scores to
+`1`/`0`/`¯1` rather than emitting crossing signals.
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Norm` | `Norm arr` | Z-score, full-array (per-fold use) |
+| `ENorm` | `ENorm arr` | Expanding-window z-score (no lookahead) |
+| `Score` | `weights Score features` | Weighted sum with auto-alignment |
+| `Thresh` | `level Thresh scores` | Map score to position `1`/`0`/`¯1` |
+| `Compose` | `weights‿level Compose features` | Norm → Score → Thresh (full-array; lookahead) |
+
 ### Metrics
 
 All take returns, return a number. Trades/TimeIn/Exposure take positions.
