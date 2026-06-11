@@ -18,12 +18,8 @@ ENorm ⇐ {
 
 # ── Scoring ────────────────────────────────────
 
-# weights Score features — weighted sum with auto-alignment
-Score ⇐ {
-  maxlen←⌈´≠¨𝕩 ⋄ f←bt.Align 𝕩
-  {maxlen>≠0⊑f ? •Out "cmp: trimming features to "∾(•Fmt ≠0⊑f)∾" bars" ; @}
-  𝕨+˝∘×>f
-}
+# weights Score features — weighted sum, features auto-aligned to shortest length
+Score ⇐ {f←bt.Align 𝕩 ⋄ 𝕨+˝∘×>f}
 
 # ── Thresholding ───────────────────────────────
 
