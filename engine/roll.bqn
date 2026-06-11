@@ -5,27 +5,26 @@ bt ← •Import "bt.bqn"
 
 # ── Rolling Metrics ──────────────────────────
 
+# Internal: rolling window sums via prefix-sum, O(n). Length (≠𝕩)-𝕨+1.
+Wsum ← {cs←0∾+`𝕩 ⋄ (𝕨↓cs) - (-𝕨)↓cs}
+
 # n RSharpe ret → rolling n-bar annualized Sharpe (sample std N-1)
+# PERF: O(n) via prefix sums (sample variance = (Σx² - (Σx)²/n)/(n-1))
 RSharpe ⇐ {
   n←𝕨 ⋄ r←𝕩
-  samp ← {
-    w ← r⊏˜(𝕩-(n-1))+↕n
-    m ← (+´w)÷n
-    s ← √(+´(w-m)⋆2)÷(n-1)⌈1
-    (√bt.tdy) × m ÷ s⌈bt.eps
-  }¨ (n-1)+↕((≠r)-(n-1))
-  ((n-1)⥊0) ∾ samp
+  s1 ← n Wsum r ⋄ s2 ← n Wsum r⋆2
+  m ← s1÷n
+  s ← √0⌈(s2 - s1×m)÷(n-1)⌈1
+  ((n-1)⥊0) ∾ (√bt.tdy) × m ÷ s⌈bt.eps
 }
 
 # n RVol ret → rolling n-bar annualized vol (sample std N-1)
+# PERF: O(n) via prefix sums
 RVol ⇐ {
   n←𝕨 ⋄ r←𝕩
-  samp ← {
-    w ← r⊏˜(𝕩-(n-1))+↕n
-    m ← (+´w)÷n
-    (√((+´(w-m)⋆2)÷(n-1)⌈1)) × √bt.tdy
-  }¨ (n-1)+↕((≠r)-(n-1))
-  ((n-1)⥊0) ∾ samp
+  s1 ← n Wsum r ⋄ s2 ← n Wsum r⋆2
+  v ← (s2 - (s1⋆2)÷n)÷(n-1)⌈1
+  ((n-1)⥊0) ∾ (√0⌈v) × √bt.tdy
 }
 
 # n RMaxDD ret → rolling max drawdown over n-bar window
@@ -41,18 +40,15 @@ RMaxDD ⇐ {
 }
 
 # n‿bench RBeta strat → rolling n-bar beta vs benchmark
+# PERF: O(n) via prefix sums (cov = (Σsb - Σs·Σb/n)/(n-1))
 RBeta ⇐ {
   n‿bench ← 𝕨
   b‿s ← bt.Align bench‿𝕩
-  beta ← {
-    ws ← s⊏˜(𝕩-(n-1))+↕n
-    wb ← b⊏˜(𝕩-(n-1))+↕n
-    ms ← (+´ws)÷n ⋄ mb ← (+´wb)÷n
-    cov ← (+´(ws-ms)×(wb-mb))÷(n-1)⌈1
-    var ← (+´(wb-mb)⋆2)÷(n-1)⌈1
-    cov÷var⌈bt.eps
-  }¨ (n-1)+↕((≠s)-(n-1))
-  ((n-1)⥊0) ∾ beta
+  ws ← n Wsum s ⋄ wb ← n Wsum b
+  wbb ← n Wsum b⋆2 ⋄ wsb ← n Wsum b×s
+  cov ← (wsb - (ws×wb)÷n)÷(n-1)⌈1
+  var ← (wbb - (wb⋆2)÷n)÷(n-1)⌈1
+  ((n-1)⥊0) ∾ cov÷var⌈bt.eps
 }
 
 # ── Scalar Metrics ───────────────────────────

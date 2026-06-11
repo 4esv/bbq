@@ -9,15 +9,15 @@ tdy ← bt.tdy
 
 # target VolTarget sig‿ret → scaled position to achieve target annualized vol
 # Uses 21-bar rolling sample std (N-1), annualized by √252
+# PERF: O(n) via prefix sums (sample variance = (Σx² - (Σx)²/n)/(n-1))
 VolTarget ⇐ {
   target ← 𝕨
   sig‿ret ← 𝕩
   n ← 21
-  rvol ← {
-    w ← ret⊏˜(𝕩-(n-1))+↕n
-    m ← (+´w)÷n
-    (√(+´(w-m)⋆2)÷((n-1)⌈1)) × √tdy
-  }¨ (n-1)+↕((≠ret)-(n-1))
+  cs1 ← 0∾+`ret ⋄ cs2 ← 0∾+`ret⋆2
+  s1 ← (n↓cs1) - (-n)↓cs1
+  s2 ← (n↓cs2) - (-n)↓cs2
+  rvol ← (√0⌈(s2 - (s1⋆2)÷n)÷(n-1)⌈1) × √tdy
   scaled ← ((n-1)↓sig) × target ÷ rvol⌈eps
   ((n-1)⥊0) ∾ scaled
 }
