@@ -12,7 +12,7 @@ PRs are welcome. Open an issue first for anything non-trivial so we can align on
 Target `main` directly. Small, focused PRs are easier to review.
 
 Checklist before opening:
-- `make test` passes (129 tests)
+- `make test` passes (134 tests)
 - New exports have tests in `tests/verify.bqn`
 - `CLAUDE.md` updated if you added or changed any exported API
 - Conventional commit message (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`)

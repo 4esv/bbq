@@ -12,7 +12,7 @@ v2.0
 
 ## Overview
 
-bbq is a quantitative finance toolkit in [BQN](https://mlochbaum.github.io/BQN/). 11 modules: indicators, backtesting, walk-forward validation, options pricing, Monte Carlo simulation, risk management, and anti-overfitting diagnostics.
+bbq is a quantitative finance toolkit in [BQN](https://mlochbaum.github.io/BQN/). 11 modules: indicators, signal composition, backtesting, walk-forward validation, options pricing, Monte Carlo simulation, rolling analytics, risk management, execution realism, anti-overfitting diagnostics, and multi-asset universe management.
 
 ## BQN 101
 
@@ -89,7 +89,7 @@ Or export from your broker.
 ```
 make new name=X        Create strategy from template
 make run name=X        Run a strategy
-make test              Run test suite (129 tests)
+make test              Run test suite (134 tests)
 make clean             Remove data files
 ```
 
@@ -183,6 +183,8 @@ paths ← mc.Paths 10000‿100‿0.05‿0.2‿1‿252   # 10k GBM paths
 price ← 100⊸mc.EuroCall mc._Price paths‿0.05‿1
 # Antithetic variance reduction
 apaths ← mc.Paths mc._Antithetic 5000‿100‿0.05‿0.2‿1‿252
+# Fat tails: Student's t innovations (ν=5)
+tpaths ← mc.TPaths 10000‿100‿0.05‿0.2‿1‿252‿5
 ```
 
 ### Risk Management
@@ -313,12 +315,16 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `IV` | `IV target‿S‿K‿T‿r‿type` | Implied volatility (Newton-Raphson) |
 | `Parity` | `Parity S‿K‿T‿r` | Put-call parity forward |
 | `Npdf` / `Phi` / `PhiInv` | Monadic | Normal distribution functions |
+| `Tpdf` / `Tcdf` | `ν Tpdf x` | Student's t PDF / CDF |
+| `TcdfInv` | `ν TcdfInv p` | Inverse Student's t CDF (Newton-Raphson) |
 
 ### Monte Carlo
 
 | Name | Signature | Description |
 |------|-----------|-------------|
 | `Paths` | `Paths n‿S₀‿μ‿σ‿T‿steps` | GBM price paths [n, steps] |
+| `TPaths` | `TPaths n‿S₀‿μ‿σ‿T‿steps‿ν` | Fat-tailed GBM paths (Student's t) |
+| `RandT` | `ν RandT n` | n Student's t samples |
 | `_Price` | `Payoff _Price paths‿r‿T` | Discounted expected payoff |
 | `_Antithetic` | `Paths _Antithetic config` | Antithetic variance reduction |
 | `EuroCall` / `EuroPut` | `k F path` | European payoffs |
@@ -348,6 +354,7 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `MaxPos` | `cap MaxPos pos` | Clip magnitude, preserve sign |
 | `CircuitBreaker` | `n‿thresh CircuitBreaker pos‿ret` | Pause on cumulative loss |
 | `DDControl` | `thresh DDControl pos‿ret` | Pause on drawdown |
+| `Scale` | `arr Scale pos` | Element-wise position scaling |
 
 ### Anti-Overfitting
 
