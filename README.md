@@ -231,6 +231,16 @@ weights ← 2 uni.TopN scores        # long top-2, short bottom-2
 
 `Load` returns a namespace: `{dates⇐, close⇐, high⇐, low⇐, open⇐, vol⇐}`. All numeric arrays are flat floats, same length. Any data source that returns this shape works with bbq.
 
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Load` | `Load path` | Parse a CSV into the data namespace |
+| `Validate` | `Validate data` | Enforce finiteness & OHLC relations (`0 Validate` = futures mode) |
+| `LoadMany` | `LoadMany paths` | Load several CSVs, tail-aligned to the shortest |
+| `Align` | `Align arrays` | Tail-align a list of arrays to the shortest |
+| `AlignDates` | `AlignDates datasets` | Tail-align a list of data namespaces |
+
+Also exported for reuse: the constants `eps` (`1e¯10`) and `tdy` (`252`), and the helpers `Split` (CSV tokenizer), `Wilder` (smoothing), and `Pstd` (population std).
+
 ### Indicators
 
 All dyadic: `n Indicator prices` unless noted. Output is shorter than input by the warmup period. EMA returns same length.
@@ -279,6 +289,23 @@ positions. Note `cmp.Thresh` differs from the `Thresh` above: it maps scores to
 | `Score` | `weights Score features` | Weighted sum with auto-alignment |
 | `Thresh` | `level Thresh scores` | Map score to position `1`/`0`/`¯1` |
 | `Compose` | `weights‿level Compose features` | Norm → Score → Thresh (full-array; lookahead) |
+
+### Backtest
+
+The core fold: lag positions one bar, multiply by returns, subtract costs.
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Ret` | `Ret prices` | Simple returns (1 shorter than input) |
+| `LogRet` | `LogRet prices` | Log returns (1 shorter than input) |
+| `Run` | `pos Run ret` | Strategy returns (`pos × ret`) |
+| `RunOHLC` | `pos RunOHLC data` | Open-to-open execution returns |
+| `Cost` | `rate Cost pos` | Per-bar transaction-cost array |
+| `Equity` | `Equity ret` | Equity curve from returns (starts at 1) |
+| `_Sim` | `Step _Sim init‿obs` | Thread bar-by-bar state into a position array |
+| `Report` | `name‿pos Report strat‿bh` | Print a strategy-vs-benchmark summary |
+
+Reporting helpers (also exported): `Pct` (signed percent), `Rd` (2-dp round), `Pad` (right-pad to width).
 
 ### Metrics
 
