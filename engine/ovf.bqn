@@ -5,7 +5,6 @@ bt  ← •Import "bt.bqn"
 opt ← •Import "opt.bqn"
 
 eps ← bt.eps
-tdy ← bt.tdy
 
 # ── Helpers ──────────────────────────────────
 
