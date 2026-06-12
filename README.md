@@ -12,7 +12,7 @@ v2.0
 
 ## Overview
 
-bbq is a quantitative finance toolkit in [BQN](https://mlochbaum.github.io/BQN/). 11 modules: indicators, backtesting, walk-forward validation, options pricing, Monte Carlo simulation, risk management, and anti-overfitting diagnostics.
+bbq is a quantitative finance toolkit in [BQN](https://mlochbaum.github.io/BQN/). 11 modules: indicators, signal composition, backtesting, walk-forward validation, options pricing, Monte Carlo simulation, rolling analytics, risk management, execution realism, anti-overfitting diagnostics, and multi-asset universe management.
 
 ## BQN 101
 
@@ -89,7 +89,7 @@ Or export from your broker.
 ```
 make new name=X        Create strategy from template
 make run name=X        Run a strategy
-make test              Run test suite (129 tests)
+make test              Run test suite (134 tests)
 make clean             Remove data files
 ```
 
@@ -183,6 +183,8 @@ paths ← mc.Paths 10000‿100‿0.05‿0.2‿1‿252   # 10k GBM paths
 price ← 100⊸mc.EuroCall mc._Price paths‿0.05‿1
 # Antithetic variance reduction
 apaths ← mc.Paths mc._Antithetic 5000‿100‿0.05‿0.2‿1‿252
+# Fat tails: Student's t innovations (ν=5)
+tpaths ← mc.TPaths 10000‿100‿0.05‿0.2‿1‿252‿5
 ```
 
 ### Risk Management
@@ -229,6 +231,16 @@ weights ← 2 uni.TopN scores        # long top-2, short bottom-2
 
 `Load` returns a namespace: `{dates⇐, close⇐, high⇐, low⇐, open⇐, vol⇐}`. All numeric arrays are flat floats, same length. Any data source that returns this shape works with bbq.
 
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Load` | `Load path` | Parse a CSV into the data namespace |
+| `Validate` | `Validate data` | Enforce finiteness & OHLC relations (`0 Validate` = futures mode) |
+| `LoadMany` | `LoadMany paths` | Load several CSVs, tail-aligned to the shortest |
+| `Align` | `Align arrays` | Tail-align a list of arrays to the shortest |
+| `AlignDates` | `AlignDates datasets` | Tail-align a list of data namespaces |
+
+Also exported for reuse: the constants `eps` (`1e¯10`) and `tdy` (`252`), and the helpers `Split` (CSV tokenizer), `Wilder` (smoothing), and `Pstd` (population std).
+
 ### Indicators
 
 All dyadic: `n Indicator prices` unless noted. Output is shorter than input by the warmup period. EMA returns same length.
@@ -263,6 +275,37 @@ All dyadic: `n Indicator prices` unless noted. Output is shorter than input by t
 | `Thresh` | `level Thresh values` | 1 where value crosses above level |
 | `ThreshDown` | `level ThreshDown values` | 1 where value crosses below level |
 | `Hold` | `n Hold positions` | Min n-bar holding period |
+
+### Composition
+
+Signal-fusion layer (`cmp.bqn`). Normalize features, blend into a score, map to
+positions. Note `cmp.Thresh` differs from the `Thresh` above: it maps scores to
+`1`/`0`/`¯1` rather than emitting crossing signals.
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Norm` | `Norm arr` | Z-score, full-array (per-fold use) |
+| `ENorm` | `ENorm arr` | Expanding-window z-score (no lookahead) |
+| `Score` | `weights Score features` | Weighted sum with auto-alignment |
+| `Thresh` | `level Thresh scores` | Map score to position `1`/`0`/`¯1` |
+| `Compose` | `weights‿level Compose features` | Norm → Score → Thresh (full-array; lookahead) |
+
+### Backtest
+
+The core fold: lag positions one bar, multiply by returns, subtract costs.
+
+| Name | Signature | Description |
+|------|-----------|-------------|
+| `Ret` | `Ret prices` | Simple returns (1 shorter than input) |
+| `LogRet` | `LogRet prices` | Log returns (1 shorter than input) |
+| `Run` | `pos Run ret` | Strategy returns (`pos × ret`) |
+| `RunOHLC` | `pos RunOHLC data` | Open-to-open execution returns |
+| `Cost` | `rate Cost pos` | Per-bar transaction-cost array |
+| `Equity` | `Equity ret` | Equity curve from returns (starts at 1) |
+| `_Sim` | `Step _Sim init‿obs` | Thread bar-by-bar state into a position array |
+| `Report` | `name‿pos Report strat‿bh` | Print a strategy-vs-benchmark summary |
+
+Reporting helpers (also exported): `Pct` (signed percent), `Rd` (2-dp round), `Pad` (right-pad to width).
 
 ### Metrics
 
@@ -313,12 +356,16 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `IV` | `IV target‿S‿K‿T‿r‿type` | Implied volatility (Newton-Raphson) |
 | `Parity` | `Parity S‿K‿T‿r` | Put-call parity forward |
 | `Npdf` / `Phi` / `PhiInv` | Monadic | Normal distribution functions |
+| `Tpdf` / `Tcdf` | `ν Tpdf x` | Student's t PDF / CDF |
+| `TcdfInv` | `ν TcdfInv p` | Inverse Student's t CDF (Newton-Raphson) |
 
 ### Monte Carlo
 
 | Name | Signature | Description |
 |------|-----------|-------------|
 | `Paths` | `Paths n‿S₀‿μ‿σ‿T‿steps` | GBM price paths [n, steps] |
+| `TPaths` | `TPaths n‿S₀‿μ‿σ‿T‿steps‿ν` | Fat-tailed GBM paths (Student's t) |
+| `RandT` | `ν RandT n` | n Student's t samples |
 | `_Price` | `Payoff _Price paths‿r‿T` | Discounted expected payoff |
 | `_Antithetic` | `Paths _Antithetic config` | Antithetic variance reduction |
 | `EuroCall` / `EuroPut` | `k F path` | European payoffs |
@@ -348,6 +395,7 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 | `MaxPos` | `cap MaxPos pos` | Clip magnitude, preserve sign |
 | `CircuitBreaker` | `n‿thresh CircuitBreaker pos‿ret` | Pause on cumulative loss |
 | `DDControl` | `thresh DDControl pos‿ret` | Pause on drawdown |
+| `Scale` | `arr Scale pos` | Element-wise position scaling |
 
 ### Anti-Overfitting
 
