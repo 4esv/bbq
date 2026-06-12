@@ -2,7 +2,6 @@
 # engine/mc.bqn — Monte Carlo simulation
 
 core ← •Import "core.bqn"
-opt ← •Import "opt.bqn"
 eps ← core.eps
 
 # ── RNG (internal) ─────────────────────────────
@@ -25,18 +24,6 @@ RandChi2 ← {+˝ (𝕨‿𝕩 ⥊ Randn 𝕨×𝕩) ⋆ 2}
 
 # nu RandT n → n Student's t samples
 RandT ⇐ {(Randn 𝕩) ÷ √(𝕨 RandChi2 𝕩)÷𝕨}
-
-# ── Formatting (internal) ──────────────────────
-
-# Rd4 — round to 4 decimal places
-Rd4 ← {
-  v ← ⌊0.5+10000×|𝕩
-  d ← ¯4↑"0000"∾•Fmt 10000|v
-  ((𝕩<0)/"-") ∾ (•Fmt ⌊v÷10000) ∾ "." ∾ d
-}
-
-# LPad — left-pad string to width (right-align)
-LPad ← (' '⥊˜⊣-≠∘⊢) ∾ ⊢
 
 # ── Path Generation ────────────────────────────
 

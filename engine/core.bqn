@@ -99,7 +99,8 @@ EMA ⇐ {
 # n WMA prices — weighted moving average
 WMA ⇐ {
   w ← 1+↕𝕨
-  {(+´w×𝕩)÷+´w}˘ 𝕨↕𝕩
+  sw ← +´w  # PERF: hoist constant weight sum out of the per-window reduction
+  {(+´w×𝕩)÷sw}˘ 𝕨↕𝕩
 }
 
 # n Std prices — rolling population standard deviation, O(n) via prefix-sum
