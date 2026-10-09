@@ -63,20 +63,20 @@ Verdict: Has potential, needs work
 
 bbq works with any CSV containing `Date,Open,High,Low,Close,Volume` columns.
 
-**Stooq** — free CSV, no API key:
+**Stooq**: free CSV, no API key:
 
 ```bash
 curl -o data/SPY.csv "https://stooq.com/q/d/l/?s=spy.us&i=d"
 ```
 
-**Yahoo Finance** — requires Python 3 + `pip install yfinance`:
+**Yahoo Finance**: requires Python 3 + `pip install yfinance`:
 
 ```python
 import yfinance as yf
 yf.download("SPY", period="5y").to_csv("data/SPY.csv")
 ```
 
-**Alpha Vantage** — free API key:
+**Alpha Vantage**: free API key:
 
 ```bash
 curl -o data/SPY.csv "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=full&apikey=YOUR_KEY&datatype=csv"
@@ -433,11 +433,11 @@ All take returns, return a number. Trades/TimeIn/Exposure take positions.
 
 ## Why BQN
 
-- **Dense, array-oriented** — natural fit for time series and matrix operations
-- **Concise** — entire indicator suite in ~25 lines vs 160+ in Python ([benchmarks](#benchmarks))
-- **Stable spec** — no breaking changes
-- **Fast** — CBQN compiles to native, competitive with numpy at scale
-- **Readable once learned** — trains and combinators compose cleanly
+- **Dense, array-oriented**: natural fit for time series and matrix operations
+- **Concise**: entire indicator suite in ~25 lines vs 160+ in Python ([benchmarks](#benchmarks))
+- **Stable spec**: no breaking changes
+- **Fast**: CBQN compiles to native, competitive with numpy at scale
+- **Readable once learned**: trains and combinators compose cleanly
 
 More at [mlochbaum.github.io/BQN](https://mlochbaum.github.io/BQN/).
 
@@ -523,8 +523,8 @@ Walk-forward validation splits history into rolling train/test windows, optimize
 
 ## Acknowledgements
 
-- [Marshall Lochbaum](https://mlochbaum.github.io/BQN/) — BQN language (ISC license)
-- [dzaima](https://github.com/dzaima/CBQN) — CBQN implementation (LGPLv3 / GPLv3 / MPL 2.0)
+- [Marshall Lochbaum](https://mlochbaum.github.io/BQN/): BQN language (ISC license)
+- [dzaima](https://github.com/dzaima/CBQN): CBQN implementation (LGPLv3 / GPLv3 / MPL 2.0)
 
 ## License
 
